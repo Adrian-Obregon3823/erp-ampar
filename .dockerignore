@@ -1,0 +1,54 @@
+# Ignorar archivos de Git
+.git
+.gitignore
+.gitattributes
+
+# Ignorar archivos de entorno
+.env
+.env.*
+!.env.example
+
+# Ignorar archivos de IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# Ignorar archivos de sistema
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Ignorar documentación
+README*.md
+docs/
+*.md
+
+# Ignorar archivos temporales
+*.log
+*.tmp
+tmp/
+temp/
+
+# Ignorar node_modules si se usan
+node_modules/
+npm-debug.log
+
+# Ignorar archivos de Composer (se instalarán en el contenedor)
+vendor/
+composer.lock
+
+# Ignorar archivos de base de datos
+*.FDB
+*.fdb
+bd/
+
+# Ignorar archivos de uploads y cache
+uploads/
+cache/
+files/
+
+# Ignorar archivos de Docker
+docker-compose.override.yml
+Dockerfile.dev

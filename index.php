@@ -1,0 +1,1 @@
+<?php header('location: gui/login.php'); ?>

@@ -1,0 +1,84 @@
+#loading {
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    position: fixed;
+    z-index: 9999;
+    background-color: #FFF;
+    opacity: 0.8;
+  }
+  
+  #loading-image {
+    position: absolute;
+    left: 45%;
+    top: 35%;
+    animation: fade 2s ease-in-out infinite;
+  }
+  
+  @keyframes fade {
+    0% { opacity: 1; }
+    50% { opacity: 0.3; }
+    100% { opacity: 1; }
+  }  
+
+.pagination {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.pagination a, .pagination strong {
+    display: inline-block;
+    padding: 8px 12px;
+    margin: 2px;
+    text-decoration: none;
+    color: #0056b3;
+    background-color: white;
+    border: 2px solid #0056b3; /* Borde azul */
+    border-radius: 5px;
+}
+
+.pagination strong {
+    background-color: #0056b3;
+    color: white
+}
+
+.modal-header {
+    padding: 8px 16px !important;
+    min-height: auto !important;
+    margin:0 !important;
+    background-color: #2899ce !important; /* Azul Bootstrap (puedes cambiarlo) */
+    color: white !important; /* Asegura que el texto sea visible */
+}
+
+/* Contenedor de la barra de progreso */
+.progress-bar-container {
+    width: 80px;
+    height: 20px;
+    background-color: #e0e0e0; /* Color de fondo de la barra */
+    border-radius: 10px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+}
+
+/* Barra de progreso */
+.progress-bar {
+    height: 100%;
+    background-color: #4caf50; /* Color de la barra de progreso */
+    border-radius: 10px 0 0 10px; /* Redondeo en los bordes izquierdos */
+    transition: width 0.3s ease; /* Animación suave para el avance */
+}
+/* UI AUCOMPLETE */
+.ui-autocomplete {
+    z-index: 10000 !important; /* Asegura que esté sobre el modal (Bootstrap usa 1050) */
+    position: absolute;
+    background: white;
+    border: 1px solid #ccc;
+    max-height: 300px;
+    overflow-y: auto;
+    font-size: 10px;  /* Cambia este valor al tamaño que desees */
+}
+.ui-autocomplete li {
+    font-size: 10px;
+}

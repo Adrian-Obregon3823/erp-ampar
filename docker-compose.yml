@@ -1,0 +1,33 @@
+version: "3.9"
+
+services:
+  php-apache:
+    build: .
+    container_name: ampar-php-firebird
+    ports:
+      - "80:80"
+    volumes:
+      - ".:/var/www/html"
+    environment:
+      # Variables de Firebird (base de datos en el host)
+      - DB_HOST=${DB_HOST:-host.docker.internal}
+      - DB_PATH=${DB_PATH}
+      - DB_USERNAME=${DB_USERNAME:-SYSDBA}
+      - DB_PASSWORD=${DB_PASSWORD:-masterkey}
+      # Variables de correo
+      - MAIL_HOST=${MAIL_HOST}
+      - MAIL_USER=${MAIL_USER}
+      - MAIL_PASSWORD=${MAIL_PASSWORD}
+      - MAIL_NAME=${MAIL_NAME:-Ampar}
+      # Variables generales
+      - SITE_URL=${SITE_URL:-http://localhost/}
+      - TIMEZONE=${TIMEZONE:-America/Monterrey}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+    networks:
+      - ampar-network
+
+networks:
+  ampar-network:
+    driver: bridge

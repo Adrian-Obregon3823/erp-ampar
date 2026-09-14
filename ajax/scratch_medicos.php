@@ -1,0 +1,1 @@
+<?php require_once("../includes/includes.php"); $db = new FirebirdConnection(); $sql = "SELECT TRIM(RDB$FIELD_NAME) AS FIELD_NAME FROM RDB$RELATION_FIELDS WHERE RDB$RELATION_NAME = 'AMPAR_CAT_MEDICOS'"; $res = $db->query($sql); print_r($res); $db->close(); ?>
