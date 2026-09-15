@@ -29,16 +29,13 @@
         <div class="content-wrapper">
           <div class="row">
             <div class="col-sm-12">
-              <div class="home-tab">
-                <?php include_once("../includes/almacenes.menu.php"); ?>
-              </div>
               <div class="tab-content tab-content-basic">
                 <!-- Inicia contenido principal -->
                 <div class="row">
                   <div class="col-12">
                     <div class="card">
                       <div class="card-header">
-                        <h4>Almacenes &nbsp;&nbsp;<a style="cursor:pointer;" data-toggle="modal" data-target="#modalglobal" data-title="Agregar Almacen" data-url="../includes/almacenes.nuevo.php" aria-selected="false"><img src="../img/agregar2.png" style="width:25px; height:25px" title="Agregar Almacén"></a>&nbsp;&nbsp;<a href="../gui/requerimientosmaterial.php" class="btn btn-sm btn-primary" style="vertical-align:middle;">Requerimientos de Material</a></h4>
+                        <h4>Almacenes &nbsp;&nbsp;<a style="cursor:pointer;" data-toggle="modal" data-target="#modalglobal" data-title="Agregar Almacen" data-url="../includes/almacenes.nuevo.php" aria-selected="false"><img src="../img/agregar2.png" style="width:25px; height:25px" title="Agregar Almacén"></h4>
                       </div>
                       <div class="card-body">
                         <?php
@@ -89,7 +86,7 @@
                               </tbody>
                             </table>
                           </div>
-                          
+
                           <!-- Mobile View (Cards) -->
                           <div class="d-block d-md-none mt-2">
                             <?php foreach ($res as $row) { ?>

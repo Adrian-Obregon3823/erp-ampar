@@ -1016,6 +1016,7 @@ class entradasalida{
                                 LPAD(COALESCE(MAX(CAST(SUBSTRING(STOCK_FOLIO FROM 2 FOR 5) AS INTEGER)),0)+1, 5, '0')
                                 || '-' || CAST(EXTRACT(YEAR FROM CURRENT_DATE)-2000 AS VARCHAR(2))
                             FROM AMPAR_HIS_STOCK
+                            WHERE STOCK_FOLIO LIKE 'A_____-__'
                         ),
                         1,
                         e.ESDET_ESID,
@@ -1416,7 +1417,7 @@ class entradasalida{
                 e.ESDET_CADUCIDADMENOR1ANIO,
                 e.ESDET_SERIE
             FROM AMPAR_HIS_ESDET e
-            LEFT JOIN AMPAR_HIS_STOCK s ON 1=1
+            LEFT JOIN AMPAR_HIS_STOCK s ON s.STOCK_FOLIO LIKE 'A_____-__'
             WHERE e.ESDET_ID = ?
                 ";
                 $idStock = $db->executeconreturning($sql3, 'STOCK_ID', [$det, $det, $almacenid, $det, $det, $det, $det, $det]);

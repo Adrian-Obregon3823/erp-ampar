@@ -42,6 +42,7 @@ class remisiones
         if ($ownConn) $db = $this->db();
         $sql = "
             SELECT RE.*, REA.*, ST.*, ED.*, AR.NOMBRE ARTICULO_NOMBRE, X.CLAVE_ARTICULO, SU.NOMBRE SUCURSAL_NOMBRE, S.*, 
+            COALESCE(ST.STOCK_FOLIO, EC.FOLIO) AS STOCK_FOLIO,
             RE.REMISION_FOLIO AS REMISION_FOLIO,
             E.EVENTO_FOLIO, E.EVENTO_CLIENTEID, P.PROYECTO_FOLIO, P.PROYECTO_CLIENTEID, COALESCE(CAST(E.EVENTO_CONCEPTO AS VARCHAR(1000)), CAST(P.PROYECTO_CONCEPTO AS VARCHAR(1000))) AS EVENTO_CONCEPTO, EVENTO_FECHAI, EVENTO_FECHAF,
             UE.USUARIO_NOMBRE ESPECIALISTA_NOMBRE, UC.USUARIO_NOMBRE CHOFER_NOMBRE,
@@ -64,7 +65,8 @@ class remisiones
             LEFT JOIN AMPAR_HIS_REMISIONESARTICULOS REA ON REMISIONARTICULO_REMISIONID = REMISION_ID
             LEFT JOIN AMPAR_HIS_STOCK ST ON STOCK_ID = REMISIONARTICULO_STOCKID
             LEFT JOIN AMPAR_HIS_ESDET ED ON ESDET_ID = STOCK_ESDETID
-            LEFT JOIN ARTICULOS AR ON AR.ARTICULO_ID = COALESCE(ST.STOCK_ARTICULOID, ESDET_ARTICULOID) 
+            LEFT JOIN AMPAR_EQUIPOCAPITAL EC ON EC.EQUIPOCAPITAL_ID = REA.REMISIONARTICULO_EQCAPITALID
+            LEFT JOIN ARTICULOS AR ON AR.ARTICULO_ID = COALESCE(ST.STOCK_ARTICULOID, ESDET_ARTICULOID, EC.ARTICULO_ID) 
             LEFT JOIN (SELECT CLAVE_ARTICULO_ID, CLAVE_ARTICULO, ARTICULO_ID FROM claves_articulos WHERE ROL_CLAVE_ART_ID = 17) X ON X.ARTICULO_ID = AR.ARTICULO_ID
             LEFT JOIN ampar_cat_sucursales SU ON SUCURSAL_ID = REMISION_SUCURSALID
             LEFT JOIN AMPAR_CONF_STATUS S ON STATUS_ID = REMISION_STATUS
@@ -287,23 +289,15 @@ class remisiones
             $rawId = (string)$articulos[$i];
             $stockid = (int)$rawId;
 
+            $eqIdFinal = "NULL";
+            $stockIdFinal = "NULL";
+
             // Manejo de Equipo Capital (empieza con ec_ o es negativo)
             if (str_starts_with($rawId, 'ec_') || $stockid < 0) {
                 $eqId = abs((int)str_replace('ec_', '', $rawId));
-                $resEq = $db->query("SELECT ARTICULO_ID, FOLIO FROM AMPAR_EQUIPOCAPITAL WHERE EQUIPOCAPITAL_ID = {$eqId}");
-                if ($resEq && !empty($resEq)) {
-                    $artIdEq = (int)$resEq[0]['ARTICULO_ID'];
-                    $folioEq = $resEq[0]['FOLIO'];
-
-                    $remInfo = $db->query("SELECT REMISION_ALMACENID FROM AMPAR_HIS_REMISIONES WHERE REMISION_ID = {$remisionid}");
-                    $almIdEq = ($remInfo && !empty($remInfo)) ? (int)$remInfo[0]['REMISION_ALMACENID'] : 1;
-
-                    $newStockId = $this->createStockForArticle($db, $artIdEq, $almIdEq, $folioEq);
-                    if ($newStockId) {
-                        $stockid = $newStockId;
-                    }
-                }
+                $eqIdFinal = $eqId;
             } else {
+                $stockIdFinal = $stockid;
                 // Verificar si el stockid existe en AMPAR_HIS_STOCK
                 $checkStock = $db->query("SELECT 1 FROM AMPAR_HIS_STOCK WHERE STOCK_ID = {$stockid}");
                 if (!$checkStock || $checkStock == 0) {
@@ -316,7 +310,7 @@ class remisiones
                         if ($almacenId) {
                             $newStockId = $this->createStockForArticle($db, $stockid, $almacenId);
                             if ($newStockId) {
-                                $stockid = $newStockId;
+                                $stockIdFinal = $newStockId;
                             }
                         }
                     }
@@ -328,6 +322,7 @@ class remisiones
                 (         
                     REMISIONARTICULO_REMISIONID,
                     REMISIONARTICULO_STOCKID,
+                    REMISIONARTICULO_EQCAPITALID,
                     REMISIONARTICULO_SUBTOTAL,
                     REMISIONARTICULO_IVA,
                     REMISIONARTICULO_TOTAL
@@ -335,7 +330,8 @@ class remisiones
                 VALUES
                 (
                     " . $remisionid . ",
-                    " . $stockid . ",
+                    " . $stockIdFinal . ",
+                    " . $eqIdFinal . ",
                     " . $subtotales[$i] . ",
                     " . $ivas[$i] . ",
                     " . $totales[$i] . "
@@ -1133,7 +1129,7 @@ class remisiones
                     LPAD(COALESCE(MAX(CAST(SUBSTRING(STOCK_FOLIO FROM 2 FOR 5) AS INTEGER)),0)+1, 5, '0')
                     || '-' || CAST(EXTRACT(YEAR FROM CURRENT_DATE)-2000 AS VARCHAR(2)) AS FOLIO
                 FROM AMPAR_HIS_STOCK
-                WHERE STOCK_FOLIO LIKE 'A%'
+                WHERE STOCK_FOLIO LIKE 'A_____-__'
             ";
             $resFolio = $db->query($sqlFolio);
             $folio = ($resFolio && !empty($resFolio)) ? $resFolio[0]['FOLIO'] : 'A00001-26';
@@ -1370,22 +1366,15 @@ class remisiones
                 $rawId = (string)$invdetids[$i];
                 $invdetid = (int)$rawId;
 
+                $eqIdFinal = "NULL";
+                $stockIdFinal = "NULL";
+
                 // Manejo de Equipo Capital (empieza con ec_ o es negativo)
                 if (str_starts_with($rawId, 'ec_') || $invdetid < 0) {
                     $eqId = abs((int)str_replace('ec_', '', $rawId));
-                    $resEq = $db->query("SELECT ARTICULO_ID, FOLIO FROM AMPAR_EQUIPOCAPITAL WHERE EQUIPOCAPITAL_ID = {$eqId}");
-                    if ($resEq && !empty($resEq)) {
-                        $artIdEq = (int)$resEq[0]['ARTICULO_ID'];
-                        $folioEq = $resEq[0]['FOLIO'];
-
-                        $remInfo = $db->query("SELECT REMISION_ALMACENID FROM AMPAR_HIS_REMISIONES WHERE REMISION_ID = {$remisionid}");
-                        $almIdEq = ($remInfo && !empty($remInfo)) ? (int)$remInfo[0]['REMISION_ALMACENID'] : 1;
-
-                        $newStockId = $this->createStockForArticle($db, $artIdEq, $almIdEq, $folioEq);
-                        if ($newStockId) {
-                            $invdetid = $newStockId;
-                        }
-                    }
+                    $eqIdFinal = $eqId;
+                } else {
+                    $stockIdFinal = $invdetid;
                 }
 
                 $subtotal = (float)$subtotales[$i];
@@ -1394,15 +1383,17 @@ class remisiones
 
                 $sqlDet = "
                     INSERT INTO AMPAR_HIS_REMISIONESARTICULOS (
-                        REMISIONARTICULO_REMISIONID, REMISIONARTICULO_STOCKID, REMISIONARTICULO_SUBTOTAL, REMISIONARTICULO_IVA, REMISIONARTICULO_TOTAL
+                        REMISIONARTICULO_REMISIONID, REMISIONARTICULO_STOCKID, REMISIONARTICULO_EQCAPITALID, REMISIONARTICULO_SUBTOTAL, REMISIONARTICULO_IVA, REMISIONARTICULO_TOTAL
                     ) VALUES (
-                        {$remisionid}, {$invdetid}, {$subtotal}, {$iva}, {$total}
+                        {$remisionid}, {$stockIdFinal}, {$eqIdFinal}, {$subtotal}, {$iva}, {$total}
                     )
                 ";
                 $db->execute($sqlDet);
 
-                // 2.2 Reflejar baja (3 = Baja)
-                $db->execute("UPDATE AMPAR_HIS_STOCK SET STOCK_STOCKSTATUSID = 3 WHERE STOCK_ID = {$invdetid}");
+                if ($stockIdFinal !== "NULL") {
+                    // 2.2 Reflejar baja (3 = Baja) solo para consumibles
+                    $db->execute("UPDATE AMPAR_HIS_STOCK SET STOCK_STOCKSTATUSID = 3 WHERE STOCK_ID = {$stockIdFinal}");
+                }
             }
 
             if (method_exists($db, 'commit')) $db->commit();

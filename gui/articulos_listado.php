@@ -96,15 +96,17 @@
       #tablaArticulos thead {
         display: none;
       }
+
       #tablaArticulos tbody tr {
         display: block;
         margin-bottom: 1rem;
         background-color: #fff;
         border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         padding: 10px;
         border: 1px solid #dee2e6;
       }
+
       #tablaArticulos tbody td {
         display: flex;
         justify-content: space-between;
@@ -114,9 +116,11 @@
         border-bottom: 1px solid #eee;
         text-align: right;
       }
+
       #tablaArticulos tbody td:last-child {
         border-bottom: none;
       }
+
       #tablaArticulos tbody td::before {
         content: attr(data-label);
         font-weight: bold;
@@ -124,24 +128,30 @@
         margin-right: 15px;
         color: #495057;
       }
+
       #tablaArticulos tbody td.dataTables_empty {
         display: block;
         text-align: center;
       }
+
       #tablaArticulos tbody td.dataTables_empty::before {
         display: none;
       }
+
       /* Prevenir scroll horizontal por paginación y anchos mínimos */
       .dataTables_wrapper .pagination {
         flex-wrap: wrap;
         justify-content: center;
       }
+
       .dataTables_wrapper .page-item {
         margin-bottom: 5px;
       }
+
       #tablaArticulos {
         min-width: 0 !important;
       }
+
       .table-responsive {
         overflow-x: visible !important;
       }
@@ -158,9 +168,6 @@
         <div class="content-wrapper">
           <div class="row">
             <div class="col-sm-12">
-              <div class="home-tab">
-                <?php include_once("../includes/articulos.menu.php"); ?>
-              </div>
               <div class="tab-content tab-content-basic">
                 <!-- Inicia contenido principal -->
                 <div class="row">
@@ -262,140 +269,140 @@
             </button>
           </div>
           <div class="modal-body" style="max-height: 75vh; overflow-y: auto;">
-            
+
             <h6 class="text-primary mt-2">1. Datos Generales</h6>
             <div class="row">
-                <div class="col-md-6 mb-3">
-                  <label class="form-label">Nombre del Artículo <span class="text-danger">*</span></label>
-                  <input type="text" class="form-control" name="nombre" required maxlength="255">
-                </div>
-                <div class="col-md-6 mb-3">
-                  <label class="form-label">Clave (Referencia)</label>
-                  <input type="text" class="form-control" name="clave" maxlength="50">
-                </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Nombre del Artículo <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" name="nombre" required maxlength="255">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Clave (Referencia)</label>
+                <input type="text" class="form-control" name="clave" maxlength="50">
+              </div>
             </div>
-            
+
             <div class="row">
-                <div class="col-md-4 mb-3">
-                  <label class="form-label">Familia</label>
-                  <select id="nuevo_familia" class="form-control select2-modal" style="width:100%"></select>
-                </div>
-                <div class="col-md-4 mb-3">
-                  <label class="form-label">División</label>
-                  <select id="nuevo_division" class="form-control select2-modal" style="width:100%"></select>
-                </div>
-                <div class="col-md-4 mb-3">
-                  <label class="form-label">Categoría <span class="text-danger">*</span></label>
-                  <select id="nuevo_categoria" name="categoria_id" class="form-control select2-modal" style="width:100%" required></select>
-                </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Familia</label>
+                <select id="nuevo_familia" class="form-control select2-modal" style="width:100%"></select>
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">División</label>
+                <select id="nuevo_division" class="form-control select2-modal" style="width:100%"></select>
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Categoría <span class="text-danger">*</span></label>
+                <select id="nuevo_categoria" name="categoria_id" class="form-control select2-modal" style="width:100%" required></select>
+              </div>
             </div>
 
             <hr>
             <h6 class="text-primary mt-2">2. Unidades y Cantidades</h6>
             <div class="row">
-                <div class="col-md-3 mb-3">
-                  <label class="form-label">Unidad de medida</label>
-                  <select class="form-control" name="unidad_venta" id="nuevo_unidad_venta"></select>
-                </div>
-                <div class="col-md-3 mb-3">
-                  <label class="form-label">Unidad de compra</label>
-                  <input type="text" class="form-control" name="unidad_compra" id="nuevo_unidad_compra">
-                </div>
-                <div class="col-md-3 mb-3">
-                  <label class="form-label">Contenido</label>
-                  <input type="number" step="0.01" class="form-control" name="contenido_unidad_compra" value="1">
-                </div>
-                <div class="col-md-3 mb-3">
-                  <label class="form-label">Clave SAT</label>
-                  <input type="text" class="form-control" name="clave_sat" maxlength="20">
-                </div>
+              <div class="col-md-3 mb-3">
+                <label class="form-label">Unidad de medida</label>
+                <select class="form-control" name="unidad_venta" id="nuevo_unidad_venta"></select>
+              </div>
+              <div class="col-md-3 mb-3">
+                <label class="form-label">Unidad de compra</label>
+                <input type="text" class="form-control" name="unidad_compra" id="nuevo_unidad_compra">
+              </div>
+              <div class="col-md-3 mb-3">
+                <label class="form-label">Contenido</label>
+                <input type="number" step="0.01" class="form-control" name="contenido_unidad_compra" value="1">
+              </div>
+              <div class="col-md-3 mb-3">
+                <label class="form-label">Clave SAT</label>
+                <input type="text" class="form-control" name="clave_sat" maxlength="20">
+              </div>
             </div>
 
             <hr>
             <h6 class="text-primary mt-2">3. Configuración y Logística</h6>
             <div class="row">
-                <div class="col-md-3 mb-3">
-                    <div class="custom-control custom-checkbox mt-4">
-                        <input type="checkbox" class="custom-control-input" id="es_almacenable" name="es_almacenable" value="S" checked>
-                        <label class="custom-control-label" for="es_almacenable">Almacenable</label>
-                    </div>
-                    <div class="custom-control custom-checkbox mt-2">
-                        <input type="checkbox" class="custom-control-input" id="es_juego" name="es_juego" value="S">
-                        <label class="custom-control-label" for="es_juego">Juego (Kit)</label>
-                    </div>
-                    <div class="custom-control custom-checkbox mt-2">
-                        <input type="checkbox" class="custom-control-input" id="es_peso_variable" name="es_peso_variable" value="S">
-                        <label class="custom-control-label" for="es_peso_variable">Pesar en la báscula</label>
-                    </div>
+              <div class="col-md-3 mb-3">
+                <div class="custom-control custom-checkbox mt-4">
+                  <input type="checkbox" class="custom-control-input" id="es_almacenable" name="es_almacenable" value="S" checked>
+                  <label class="custom-control-label" for="es_almacenable">Almacenable</label>
                 </div>
-                <div class="col-md-3 mb-3">
-                    <label class="form-label">Peso unitario</label>
-                    <input type="number" step="0.01" class="form-control" name="peso_unitario" value="0.00">
-                    <label class="form-label mt-2">Pedimentos</label>
-                    <select class="form-control" name="pedimentos">
-                        <option value="N">No requiere</option>
-                        <option value="S">Siempre importado</option>
-                    </select>
-                    <label class="form-label mt-2">Arancel (%)</label>
-                    <input type="number" step="0.01" class="form-control" name="pctje_arancel" value="0.00">
+                <div class="custom-control custom-checkbox mt-2">
+                  <input type="checkbox" class="custom-control-input" id="es_juego" name="es_juego" value="S">
+                  <label class="custom-control-label" for="es_juego">Juego (Kit)</label>
                 </div>
-                <div class="col-md-4 mb-3 border rounded p-2">
-                    <label class="form-label font-weight-bold">Seguimiento de las unidades</label>
-                    <div class="custom-control custom-radio">
-                      <input type="radio" id="seg_normal" name="seguimiento" class="custom-control-input" value="N" checked>
-                      <label class="custom-control-label" for="seg_normal">Normal</label>
-                    </div>
-                    <div class="custom-control custom-radio">
-                      <input type="radio" id="seg_lotes" name="seguimiento" class="custom-control-input" value="L">
-                      <label class="custom-control-label" for="seg_lotes">Lotes</label>
-                    </div>
-                    <div class="custom-control custom-radio">
-                      <input type="radio" id="seg_serie" name="seguimiento" class="custom-control-input" value="S">
-                      <label class="custom-control-label" for="seg_serie">Números de serie</label>
-                    </div>
-                    <label class="form-label mt-2">Días de garantía:</label>
-                    <input type="number" class="form-control form-control-sm w-50 d-inline-block" name="dias_garantia" value="0">
+                <div class="custom-control custom-checkbox mt-2">
+                  <input type="checkbox" class="custom-control-input" id="es_peso_variable" name="es_peso_variable" value="S">
+                  <label class="custom-control-label" for="es_peso_variable">Pesar en la báscula</label>
                 </div>
-                <div class="col-md-2 mb-3">
-                    <label class="form-label">Estatus</label>
-                    <select class="form-control" name="estatus">
-                        <option value="A">Activo</option>
-                        <option value="S">Suspendido</option>
-                    </select>
+              </div>
+              <div class="col-md-3 mb-3">
+                <label class="form-label">Peso unitario</label>
+                <input type="number" step="0.01" class="form-control" name="peso_unitario" value="0.00">
+                <label class="form-label mt-2">Pedimentos</label>
+                <select class="form-control" name="pedimentos">
+                  <option value="N">No requiere</option>
+                  <option value="S">Siempre importado</option>
+                </select>
+                <label class="form-label mt-2">Arancel (%)</label>
+                <input type="number" step="0.01" class="form-control" name="pctje_arancel" value="0.00">
+              </div>
+              <div class="col-md-4 mb-3 border rounded p-2">
+                <label class="form-label font-weight-bold">Seguimiento de las unidades</label>
+                <div class="custom-control custom-radio">
+                  <input type="radio" id="seg_normal" name="seguimiento" class="custom-control-input" value="N" checked>
+                  <label class="custom-control-label" for="seg_normal">Normal</label>
                 </div>
+                <div class="custom-control custom-radio">
+                  <input type="radio" id="seg_lotes" name="seguimiento" class="custom-control-input" value="L">
+                  <label class="custom-control-label" for="seg_lotes">Lotes</label>
+                </div>
+                <div class="custom-control custom-radio">
+                  <input type="radio" id="seg_serie" name="seguimiento" class="custom-control-input" value="S">
+                  <label class="custom-control-label" for="seg_serie">Números de serie</label>
+                </div>
+                <label class="form-label mt-2">Días de garantía:</label>
+                <input type="number" class="form-control form-control-sm w-50 d-inline-block" name="dias_garantia" value="0">
+              </div>
+              <div class="col-md-2 mb-3">
+                <label class="form-label">Estatus</label>
+                <select class="form-control" name="estatus">
+                  <option value="A">Activo</option>
+                  <option value="S">Suspendido</option>
+                </select>
+              </div>
             </div>
 
             <hr>
             <h6 class="text-success mt-2">4. Precios de Venta (Subtotal)</h6>
             <div class="row">
-                <div class="col-md-6 mb-3">
-                    <label class="form-label">Precio Base de Venta (Subtotal sin IVA)</label>
-                    <div class="input-group">
-                        <div class="input-group-prepend"><span class="input-group-text">$</span></div>
-                        <input type="number" step="0.01" class="form-control" name="precio_base_venta" placeholder="0.00">
-                    </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Precio Base de Venta (Subtotal sin IVA)</label>
+                <div class="input-group">
+                  <div class="input-group-prepend"><span class="input-group-text">$</span></div>
+                  <input type="number" step="0.01" class="form-control" name="precio_base_venta" placeholder="0.00">
                 </div>
+              </div>
             </div>
-            
+
             <div id="contenedorPreciosVenta">
-                <!-- Filas dinámicas de precios por cliente -->
+              <!-- Filas dinámicas de precios por cliente -->
             </div>
             <button type="button" class="btn btn-sm btn-outline-success mt-2" id="btnAddPrecioVenta"><i class="mdi mdi-plus"></i> Añadir precio por cliente</button>
 
             <hr>
             <h6 class="text-info mt-3">5. Precios de Compra (Subtotal)</h6>
             <div class="row">
-                <div class="col-md-6 mb-3">
-                    <label class="form-label">Precio Base de Compra (Costo Base)</label>
-                    <div class="input-group">
-                        <div class="input-group-prepend"><span class="input-group-text">$</span></div>
-                        <input type="number" step="0.01" class="form-control" name="precio_base_compra" placeholder="0.00">
-                    </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Precio Base de Compra (Costo Base)</label>
+                <div class="input-group">
+                  <div class="input-group-prepend"><span class="input-group-text">$</span></div>
+                  <input type="number" step="0.01" class="form-control" name="precio_base_compra" placeholder="0.00">
                 </div>
+              </div>
             </div>
 
             <div id="contenedorPreciosCompra">
-                <!-- Filas dinámicas de precios por proveedor -->
+              <!-- Filas dinámicas de precios por proveedor -->
             </div>
             <button type="button" class="btn btn-sm btn-outline-info mt-2" id="btnAddPrecioCompra"><i class="mdi mdi-plus"></i> Añadir precio por proveedor</button>
 
@@ -496,8 +503,7 @@
               return json.items || [];
             }
           },
-          columns: [
-            {
+          columns: [{
               data: null,
               orderable: false,
               searchable: false,
@@ -711,7 +717,7 @@
         }).fail(function(jqXHR) {
           let errorMsg = 'Error en el servidor al intentar guardar.';
           if (jqXHR.responseJSON && jqXHR.responseJSON.msg) {
-              errorMsg = jqXHR.responseJSON.msg;
+            errorMsg = jqXHR.responseJSON.msg;
           }
           $('#editErrMsg').text(errorMsg).show();
         });
@@ -785,7 +791,7 @@
           selectedIds.delete(id);
         }
         actualizarBotonMulti();
-        
+
         const totalRows = $('.chk-articulo').length;
         const totalChecked = $('.chk-articulo:checked').length;
         $('#checkAll').prop('checked', totalRows > 0 && totalRows === totalChecked);
@@ -819,7 +825,7 @@
             allCheckedOnPage = false;
           }
         });
-        
+
         $('#checkAll').prop('checked', hasRows && allCheckedOnPage);
         actualizarBotonMulti();
       });
@@ -839,8 +845,12 @@
           cancelButtonText: 'Cancelar'
         }).then((result) => {
           if (result.isConfirmed) {
-            $.post('../ajax/articulos.desactivar_multi.php', { ids: ids }, function(r) {
-              try { r = (typeof r === 'string') ? JSON.parse(r) : r; } catch (e) {}
+            $.post('../ajax/articulos.desactivar_multi.php', {
+              ids: ids
+            }, function(r) {
+              try {
+                r = (typeof r === 'string') ? JSON.parse(r) : r;
+              } catch (e) {}
 
               if (!r.ok) {
                 Swal.fire('Error', r.msg || 'No se pudo procesar la solicitud', 'error');
@@ -849,7 +859,7 @@
 
               selectedIds.clear();
               tabla.ajax.reload(null, false);
-              
+
               Swal.fire({
                 icon: 'success',
                 title: '¡Desactivados!',
@@ -991,7 +1001,10 @@
           processResults: function(data) {
             return {
               results: data.map(function(item) {
-                return { id: item.ID, text: item.NOMBRE };
+                return {
+                  id: item.ID,
+                  text: item.NOMBRE
+                };
               })
             };
           },
@@ -1018,7 +1031,10 @@
           processResults: function(data) {
             return {
               results: data.map(function(item) {
-                return { id: item.ID, text: item.NOMBRE };
+                return {
+                  id: item.ID,
+                  text: item.NOMBRE
+                };
               })
             };
           },
@@ -1046,7 +1062,10 @@
           processResults: function(data) {
             return {
               results: data.map(function(item) {
-                return { id: item.ID, text: item.NOMBRE };
+                return {
+                  id: item.ID,
+                  text: item.NOMBRE
+                };
               })
             };
           },
@@ -1076,7 +1095,14 @@
           dataType: 'json',
           delay: 250,
           processResults: function(data) {
-            return { results: data.map(function(item) { return { id: item.ID, text: item.NOMBRE }; }) };
+            return {
+              results: data.map(function(item) {
+                return {
+                  id: item.ID,
+                  text: item.NOMBRE
+                };
+              })
+            };
           },
           cache: true
         }
@@ -1093,9 +1119,20 @@
           url: '../ajax/get.divisiones.by.familia.php',
           dataType: 'json',
           delay: 250,
-          data: function(params) { return { familiaid: $('#nuevo_familia').val() }; },
+          data: function(params) {
+            return {
+              familiaid: $('#nuevo_familia').val()
+            };
+          },
           processResults: function(data) {
-            return { results: data.map(function(item) { return { id: item.ID, text: item.NOMBRE }; }) };
+            return {
+              results: data.map(function(item) {
+                return {
+                  id: item.ID,
+                  text: item.NOMBRE
+                };
+              })
+            };
           },
           cache: true
         }
@@ -1119,7 +1156,14 @@
             };
           },
           processResults: function(data) {
-            return { results: data.map(function(item) { return { id: item.ID, text: item.NOMBRE }; }) };
+            return {
+              results: data.map(function(item) {
+                return {
+                  id: item.ID,
+                  text: item.NOMBRE
+                };
+              })
+            };
           },
           cache: true
         }
@@ -1164,7 +1208,7 @@
           </div>
         `;
         $('#contenedorPreciosVenta').append(html);
-        
+
         $(`#fila-pv-${cvIdx} .select2-clientes`).select2({
           dropdownParent: $('#modalNuevoArticulo'),
           placeholder: 'Buscar cliente...',
@@ -1172,10 +1216,21 @@
             url: '../ajax/precios.buscar_clientes.php',
             dataType: 'json',
             delay: 250,
-            data: function(params) { return { q: params.term || '*' }; },
+            data: function(params) {
+              return {
+                q: params.term || '*'
+              };
+            },
             processResults: function(data) {
-              let res = data.items ? data.items.map(function(i){ return {id: i.CLIENTE_ID, text: i.NOMBRE}; }) : [];
-              return { results: res };
+              let res = data.items ? data.items.map(function(i) {
+                return {
+                  id: i.CLIENTE_ID,
+                  text: i.NOMBRE
+                };
+              }) : [];
+              return {
+                results: res
+              };
             }
           }
         });
@@ -1204,7 +1259,7 @@
           </div>
         `;
         $('#contenedorPreciosCompra').append(html);
-        
+
         $(`#fila-pc-${cpIdx} .select2-proveedores`).select2({
           dropdownParent: $('#modalNuevoArticulo'),
           placeholder: 'Buscar proveedor...',
@@ -1212,17 +1267,28 @@
             url: '../ajax/preciosc.buscar_proveedores.php',
             dataType: 'json',
             delay: 250,
-            data: function(params) { return { q: params.term || '*' }; },
+            data: function(params) {
+              return {
+                q: params.term || '*'
+              };
+            },
             processResults: function(data) {
-              let res = data.items ? data.items.map(function(i){ return {id: i.PROVEEDOR_ID, text: i.NOMBRE}; }) : [];
-              return { results: res };
+              let res = data.items ? data.items.map(function(i) {
+                return {
+                  id: i.PROVEEDOR_ID,
+                  text: i.NOMBRE
+                };
+              }) : [];
+              return {
+                results: res
+              };
             }
           }
         });
       });
 
       $(document).on('click', '.btn-eliminar-fila', function() {
-          $(this).closest('.row').remove();
+        $(this).closest('.row').remove();
       });
 
       // Enviar Formulario Nuevo
@@ -1232,7 +1298,9 @@
         $('#nuevoErrMsg').hide().text('');
 
         $.post('../ajax/articulos.nuevo.php', fd, function(r) {
-          try { r = (typeof r === 'string') ? JSON.parse(r) : r; } catch (e) {}
+          try {
+            r = (typeof r === 'string') ? JSON.parse(r) : r;
+          } catch (e) {}
           if (!r.ok) {
             $('#nuevoErrMsg').text(r.msg || 'Error al guardar').show();
             return;
