@@ -216,7 +216,7 @@ function mostrarConfirmacionEvento(eventoid, folio) {
                 cardsHtml = `<div class="alert alert-light border text-center text-muted py-3">No hay artículos para mostrar.</div>`;
             } else {
                 items.forEach(function(item, idx) {
-                    let esMaleta = item.TIPO_ITEM === 'MALETA_EQUIPO';
+                    let esMaleta = item.TIPO_ITEM === 'MALETA_EQUIPO' || item.ES_EQUIPO_CAPITAL == 1 || item.ES_EQUIPO_CAPITAL === '1';
                     let badgeTipo = esMaleta 
                         ? `<span class="badge badge-dark text-white py-1 px-2" style="font-size:0.8rem; background-color: #343a40;"><i class="mdi mdi-briefcase mr-1"></i> Equipo Capital</span>`
                         : `<span class="badge badge-success text-white py-1 px-2" style="font-size:0.8rem; background-color: #28a745;"><i class="mdi mdi-cube-outline mr-1"></i> Artículo</span>`;

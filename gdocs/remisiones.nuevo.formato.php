@@ -51,6 +51,8 @@ $gransubtotal = 0.0;
 $graniva = 0.0;
 $grantotal = 0.0;
 
+$esUap = (isset($filaCab['HOSPITAL_ID']) && $filaCab['HOSPITAL_ID'] == 25);
+
 foreach ($res as $r) {
     if (empty($r['REMISIONARTICULO_ID'])) {
         continue;
@@ -60,9 +62,11 @@ foreach ($res as $r) {
     $iva = (float)$r['REMISIONARTICULO_IVA'];
     $total = (float)$r['REMISIONARTICULO_TOTAL'];
 
-    $gransubtotal += $subtotal;
-    $graniva += $iva;
-    $grantotal += $total;
+    if (!$esUap) {
+        $gransubtotal += $subtotal;
+        $graniva += $iva;
+        $grantotal += $total;
+    }
 
     $ref = $r['CLAVE_ARTICULO'] ?? '';
     $folioArticulo = $r['STOCK_FOLIO'] ?? '';
@@ -80,6 +84,8 @@ foreach ($res as $r) {
 
     $filas[] = [
         'bag' => $bag,
+        'clave' => $ref,
+        'folio' => $folioArticulo,
         'referencia' => $referencia,
         'cantidad' => 1,
         'descripcion' => $r['ARTICULO_NOMBRE'] ?? '',
@@ -95,9 +101,20 @@ if ($resp && $resp != 0) {
         $iva = (float)$r['REMISIONPROVARTICULO_IVA'];
         $total = (float)$r['REMISIONPROVARTICULO_TOTAL'];
 
-        $gransubtotal += $subtotal;
-        $graniva += $iva;
-        $grantotal += $total;
+        $esPaqueteUap = false;
+        if ($esUap) {
+            $refProv = strtoupper($r['CLAVE_ARTICULO'] ?? '');
+            $esPaqueteUap = (substr($refProv, -4) === '-UAP');
+            if ($esPaqueteUap) {
+                $gransubtotal += $subtotal;
+                $graniva += $iva;
+                $grantotal += $total;
+            }
+        } else {
+            $gransubtotal += $subtotal;
+            $graniva += $iva;
+            $grantotal += $total;
+        }
 
         $filas[] = [
             'bag' => '',
@@ -107,8 +124,49 @@ if ($resp && $resp != 0) {
             'lote' => '',
             'precio_u' => ((int)$r['REMISIONPROVARTICULO_CANTIDAD'] > 0) ? ($subtotal / (int)$r['REMISIONPROVARTICULO_CANTIDAD']) : 0,
             'total' => $total,
+            'clave' => $r['CLAVE_ARTICULO'] ?? '',
         ];
     }
+}
+
+// Lógica especial UAP
+if ($esUap) {
+    $agrupado = [];
+    foreach ($filas as $f) {
+        $cve = $f['clave'] ?? $f['referencia'];
+        // Si no tiene clave, usar la descripcion como fallback
+        $key = !empty($cve) ? $cve : $f['descripcion']; 
+        
+        if (!isset($agrupado[$key])) {
+            $agrupado[$key] = $f;
+            $agrupado[$key]['folios'] = !empty($f['folio']) ? [$f['folio']] : [];
+            $agrupado[$key]['lote'] = ''; // Clear lote for grouped items
+        } else {
+            $agrupado[$key]['cantidad'] += $f['cantidad'];
+            if (!empty($f['folio'])) {
+                $agrupado[$key]['folios'][] = $f['folio'];
+            }
+        }
+    }
+    
+    // Reconstruir referencias
+    $filas = [];
+    $paqueteFilas = [];
+    $otrasFilas = [];
+    foreach ($agrupado as $k => $f) {
+        if (!empty($f['folios'])) {
+            $f['referencia'] = ($f['clave'] ?? $f['referencia']) . ' / ' . implode(', ', $f['folios']);
+        } else {
+            $f['referencia'] = $f['clave'] ?? $f['referencia'];
+        }
+        
+        if (substr(strtoupper($f['clave'] ?? $f['referencia']), -4) === '-UAP') {
+            $paqueteFilas[] = $f;
+        } else {
+            $otrasFilas[] = $f;
+        }
+    }
+    $filas = array_merge($paqueteFilas, $otrasFilas);
 }
 ?>
 <!DOCTYPE html>
@@ -314,8 +372,9 @@ if ($resp && $resp != 0) {
             width: 9%;
         }
 
-        .col-blank {
+        .col-cantidad {
             width: 8%;
+            text-align: center;
         }
 
         .col-desc {
@@ -541,10 +600,10 @@ if ($resp && $resp != 0) {
         <table class="main-table">
             <thead>
                 <tr>
-                    <th class="col-blank"></th>
                     <th class="col-bag">Bag</th>
                     <th class="col-ref">Referencia/Folio</th>
                     <th class="col-desc">Descripción</th>
+                    <th class="col-cantidad">Cantidad</th>
                     <th class="col-lote">Lote</th>
                     <th class="col-precio">Precio U.</th>
                 </tr>
@@ -556,15 +615,19 @@ if ($resp && $resp != 0) {
                     if (isset($filas[$i])) {
                         $f = $filas[$i];
                         echo '<tr>';
-                        echo '<td class="col-blank"></td>';
                         echo '<td class="col-bag" style="text-align:center;">' . esc($f['bag']) . '</td>';
                         echo '<td class="col-ref" style="text-align:center; font-weight:bold;">' . esc($f['referencia']) . '</td>';
                         echo '<td class="col-desc" style="padding-left:4px;">' . esc($f['descripcion']) . '</td>';
+                        echo '<td class="col-cantidad" style="text-align:center;">' . esc($f['cantidad']) . '</td>';
                         echo '<td class="col-lote" style="text-align:center;">' . esc($f['lote']) . '</td>';
                         if (isset($_GET['noprecios']) && $_GET['noprecios'] == '1') {
                             echo '<td class="col-precio" style="text-align:right; padding-right:2px;"></td>';
                         } else {
-                            echo '<td class="col-precio" style="text-align:right; padding-right:2px;">$' . number_format($f['precio_u'], 2, '.', ',') . '</td>';
+                            if ($esUap && substr(strtoupper($f['clave'] ?? $f['referencia']), -4) !== '-UAP') {
+                                echo '<td class="col-precio" style="text-align:right; padding-right:2px;"></td>';
+                            } else {
+                                echo '<td class="col-precio" style="text-align:right; padding-right:2px;">$' . number_format($f['precio_u'], 2, '.', ',') . '</td>';
+                            }
                         }
                         echo '</tr>';
                     } else {
@@ -572,7 +635,7 @@ if ($resp && $resp != 0) {
                     }
                 }
                 ?>
-            <?php if (!isset($_GET['noprecios']) || $_GET['noprecios'] != '1'): ?>
+            <?php if ((!isset($_GET['noprecios']) || $_GET['noprecios'] != '1') && !$esUap): ?>
                 <!-- TOTALS ROWS -->
                 <tr>
                     <td colspan="4" rowspan="5" style="border:none;"></td>

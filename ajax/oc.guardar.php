@@ -4,6 +4,7 @@ include_once("../includes/includes.php");
 header('Content-Type: application/json; charset=utf-8');
 
 try {
+    $ocid = isset($_POST['ocid']) ? (int)$_POST['ocid'] : 0;
     $almacenId = isset($_POST['almacenid']) ? (int)$_POST['almacenid'] : 0;
     $proveedorId = isset($_POST['proveedorid']) ? (int)$_POST['proveedorid'] : 0;
     $statusId = isset($_POST['statusid']) ? (int)$_POST['statusid'] : 1; // Default to Borrador (1)
@@ -53,7 +54,11 @@ try {
     }
     
     $oc = new oc();
-    $res = $oc->guardarManual($almacenId, $proveedorId, $statusId, $articulos, $requerimientomaterialid, $descuentoglobalpct);
+    if ($ocid > 0) {
+        $res = $oc->editarManual($ocid, $almacenId, $proveedorId, $statusId, $articulos, $requerimientomaterialid, $descuentoglobalpct);
+    } else {
+        $res = $oc->guardarManual($almacenId, $proveedorId, $statusId, $articulos, $requerimientomaterialid, $descuentoglobalpct);
+    }
     
     echo json_encode([
         'status' => 'success',

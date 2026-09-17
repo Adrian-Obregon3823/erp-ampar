@@ -97,6 +97,25 @@ if ((int)$res[0]['REMISION_STATUS'] !== 1) {
             </div>
           </div>
 
+          <!-- Buscador de Paquete UAP -->
+          <div class="row mt-3">
+            <div class="col-md-12">
+              <label><b>Agregar Paquete UAP</b></label>
+              <div class="form-row">
+                <div class="col-12 col-md-8 mb-2">
+                  <select id="selectPaqueteUap" class="form-control">
+                    <option value="">Cargando Paquetes...</option>
+                  </select>
+                </div>
+                <div class="col-12 col-md-4">
+                  <button type="button" class="btn btn-info btn-block" id="btnAgregarPaqueteUap">
+                    Agregar Paquete a remisión
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div class="table-responsive mt-3">
             <table class="table table-sm">
               <thead class="thead-light">
@@ -560,6 +579,76 @@ if ((int)$res[0]['REMISION_STATUS'] !== 1) {
           alert(res);
         }
       });
+    });
+
+    // Obtener y llenar Paquetes UAP
+    $.getJSON("../ajax/get.articulos.catalogo.php", function(data) {
+      var opcionesPaquete = '<option value="">Selecciona un paquete...</option>';
+      $.each(data, function(i, obj) {
+          var ref = (obj.CLAVE_ARTICULO || "").toUpperCase();
+          if (ref.endsWith("-UAP")) {
+              opcionesPaquete += `<option value="${obj.ID}">${obj.NOMBRE} (${obj.CLAVE_ARTICULO})</option>`;
+          }
+      });
+      $("#selectPaqueteUap").html(opcionesPaquete);
+    });
+
+    $("#btnAgregarPaqueteUap").click(function() {
+      const articuloId = $("#selectPaqueteUap").val();
+      const cantidad = 1;
+      const remisionid = $("#remisionid").val();
+      if (!articuloId) return alert("Seleccione un paquete UAP.");
+
+      $.post("../ajax/remisiones.proveedor.detalle.agregar.php", {
+          remisionid,
+          proveedorid: 0,
+          articuloid: articuloId,
+          cantidad
+        },
+        function(res) {
+          if (res.trim() === "") {
+            $.getJSON("../ajax/remisiones.proveedor.detalle.ultimo.php?remisionid=" + remisionid, function(r) {
+              const row = r || {};
+              const rid = row.REMISIONPROVARTICULO_ID || ("tmpp-" + Date.now());
+              const subtotal = parseFloat(row.REMISIONPROVARTICULO_SUBTOTAL || 0);
+              const iva = parseFloat(row.REMISIONPROVARTICULO_IVA || 0);
+              const total = parseFloat(row.REMISIONPROVARTICULO_TOTAL || 0);
+              $("#tbodyProveedor").append(`
+              <tr data-row="prov-${rid}">
+                <td>PAQUETE UAP</td>
+                <td><b>${row.CLAVE_ARTICULO || ''}</b> - ${row.ARTICULO_NOMBRE || ''}</td>
+                <td class="text-center">1</td>
+                <td class="text-right">
+                    <input type="number" step="0.01" class="form-control form-control-sm text-right input-subtotal-prov" data-id="${rid}" value="${subtotal.toFixed(2)}">
+                </td>
+                <td class="text-right">
+                    <input type="number" step="0.01" class="form-control form-control-sm text-right input-iva-prov" data-id="${rid}" value="${iva.toFixed(2)}" readonly>
+                </td>
+                <td class="text-right">
+                    <input type="number" step="0.01" class="form-control form-control-sm text-right input-total-prov" data-id="${rid}" value="${total.toFixed(2)}" readonly>
+                </td>
+                <td>
+                  <button type="button" class="btn btn-danger btn-sm" onclick="eliminar('PROV','${rid}')">
+                    <i class="mdi mdi-delete"></i>
+                  </button>
+                </td>
+              </tr>
+            `);
+              $("#selectPaqueteUap").val("");
+              recalcTotales();
+              
+              Swal.fire({
+                icon: 'success',
+                title: 'Agregado',
+                text: 'Paquete UAP agregado a la remisión.',
+                timer: 2000,
+                showConfirmButton: false
+              });
+            });
+          } else {
+            alert(res);
+          }
+        });
     });
 
     // Agregar renglón proveedor a remisión (server calcula montos)

@@ -64,13 +64,17 @@ $resp = $remisiones->getremisionprovinfobyid($remisionid);
                             $graniva = 0;
                             $gransubtotal = 0;
                             $rowIndex = 1;
+                            $esUap = (isset($res[0]['HOSPITAL_ID']) && $res[0]['HOSPITAL_ID'] == 25);
                         ?>
                         <?php foreach ($res as $re){ ?>
                             <?php if (!is_null($re['REMISIONARTICULO_TOTAL'])) { ?>
                                 <?php 
-                                    $gransubtotal += $re['REMISIONARTICULO_SUBTOTAL']; 
-                                    $graniva += $re['REMISIONARTICULO_IVA']; 
-                                    $grantotal += $re['REMISIONARTICULO_TOTAL']; 
+                                    $mostrarPrecio = !$esUap; // En stock normal de ampar no puede ser UAP
+                                    if ($mostrarPrecio) {
+                                        $gransubtotal += $re['REMISIONARTICULO_SUBTOTAL']; 
+                                        $graniva += $re['REMISIONARTICULO_IVA']; 
+                                        $grantotal += $re['REMISIONARTICULO_TOTAL']; 
+                                    }
                                 ?>
                                 <tr>
                                     <td class="text-center"><?=$rowIndex++?></td>
@@ -81,7 +85,7 @@ $resp = $remisiones->getremisionprovinfobyid($remisionid);
                                             <br><small class="text-muted">Maleta: <?=$re['MALETA_FOLIO']?> - <?=$re['MALETA_NOMBRE']?></small>
                                         <?php endif; ?>
                                     </td>
-                                    <td>$<?=number_format($re['REMISIONARTICULO_SUBTOTAL'],2,'.',',')?></td>
+                                    <td><?=$mostrarPrecio ? '$' . number_format($re['REMISIONARTICULO_SUBTOTAL'],2,'.',',') : '$0.00'?></td>
                                 </tr>
                             <?php } ?>
                         <?php } ?>
@@ -89,27 +93,44 @@ $resp = $remisiones->getremisionprovinfobyid($remisionid);
                         if ($resp <> 0){
                             foreach ($resp as $re){?>
                                 <?php 
-                                    $gransubtotal += $re['REMISIONPROVARTICULO_SUBTOTAL']; 
-                                    $graniva += $re['REMISIONPROVARTICULO_IVA']; 
-                                    $grantotal += $re['REMISIONPROVARTICULO_TOTAL']; 
+                                    $mostrarPrecioProv = true;
+                                    if ($esUap) {
+                                        $refProv = strtoupper($re['CLAVE_ARTICULO'] ?? '');
+                                        // Solo mostrar si es el paquete UAP
+                                        $mostrarPrecioProv = (substr($refProv, -4) === '-UAP');
+                                        if ($mostrarPrecioProv) {
+                                            $gransubtotal += $re['REMISIONPROVARTICULO_SUBTOTAL']; 
+                                            $graniva += $re['REMISIONPROVARTICULO_IVA']; 
+                                            $grantotal += $re['REMISIONPROVARTICULO_TOTAL']; 
+                                        }
+                                    } else {
+                                        $gransubtotal += $re['REMISIONPROVARTICULO_SUBTOTAL']; 
+                                        $graniva += $re['REMISIONPROVARTICULO_IVA']; 
+                                        $grantotal += $re['REMISIONPROVARTICULO_TOTAL']; 
+                                    }
                                 ?>
                                 <tr>
                                     <td class="text-center"><?=$rowIndex++?></td>
                                     <td></td>
-                                    <td><b><?=$re['CLAVE_ARTICULO']?></b> - <?=$re['NOMBRE_ARTICULO']?> (<?=$re['NOMBREPROVEEDOR']?>)</td>
-                                    <td>$<?=number_format($re['REMISIONPROVARTICULO_SUBTOTAL'],2,'.',',')?></td>
+                                    <td><b><?=$re['CLAVE_ARTICULO']?></b> - <?=$re['NOMBRE_ARTICULO']?> (<?=$re['NOMBREPROVEEDOR'] ?? 'PAQUETE UAP'?>)</td>
+                                    <td><?=$mostrarPrecioProv ? '$' . number_format($re['REMISIONPROVARTICULO_SUBTOTAL'],2,'.',',') : '$0.00'?></td>
                                 </tr>
                             <?php }
-                        }
-                        ?>
+                        }?>
+                        <tr>
+                            <td colspan="3" class="text-right"><b>SUBTOTAL</b></td>
+                            <td>$<?=number_format($gransubtotal,2,'.',',')?></td>
+                        </tr>
+                        <tr>
+                            <td colspan="3" class="text-right"><b>IVA</b></td>
+                            <td>$<?=number_format($graniva,2,'.',',')?></td>
+                        </tr>
+                        <tr>
+                            <td colspan="3" class="text-right"><b>TOTAL</b></td>
+                            <td>$<?=number_format($grantotal,2,'.',',')?></td>
+                        </tr>
                     </table>
                 </div>
-                <br>
-                <h4 align="right">
-                    SUBTOTAL $<?=number_format($gransubtotal,2,'.',',')?>
-                    <br>IVA $<?=number_format($graniva,2,'.',',')?>
-                    <br>TOTAL $<?=number_format($grantotal,2,'.',',')?>
-                </h4>
             <?php } ?>
         </div>
     </div>

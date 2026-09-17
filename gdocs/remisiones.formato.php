@@ -31,6 +31,8 @@ $gransubtotal = 0.0;
 $graniva = 0.0;
 $grantotal = 0.0;
 
+$esUap = (isset($filaCab['HOSPITAL_ID']) && $filaCab['HOSPITAL_ID'] == 25);
+
 foreach ($res as $r) {
     if (empty($r['REMISIONARTICULO_ID'])) {
         continue;
@@ -40,9 +42,11 @@ foreach ($res as $r) {
     $iva = (float)$r['REMISIONARTICULO_IVA'];
     $total = (float)$r['REMISIONARTICULO_TOTAL'];
 
-    $gransubtotal += $subtotal;
-    $graniva += $iva;
-    $grantotal += $total;
+    if (!$esUap) {
+        $gransubtotal += $subtotal;
+        $graniva += $iva;
+        $grantotal += $total;
+    }
 
     $ref = $r['CLAVE_ARTICULO'] ?? '';
     $folio = $r['STOCK_FOLIO'] ?? '';
@@ -60,6 +64,8 @@ foreach ($res as $r) {
 
     $filas[] = [
         'bag' => $bag,
+        'clave' => $ref,
+        'folio' => $folio,
         'referencia' => $referencia,
         'cantidad' => 1,
         'descripcion' => $r['ARTICULO_NOMBRE'] ?? '',
@@ -75,12 +81,25 @@ if ($resp && $resp != 0) {
         $iva = (float)$r['REMISIONPROVARTICULO_IVA'];
         $total = (float)$r['REMISIONPROVARTICULO_TOTAL'];
 
-        $gransubtotal += $subtotal;
-        $graniva += $iva;
-        $grantotal += $total;
+        $esPaqueteUap = false;
+        if ($esUap) {
+            $refProv = strtoupper($r['CLAVE_ARTICULO'] ?? '');
+            $esPaqueteUap = (substr($refProv, -4) === '-UAP');
+            if ($esPaqueteUap) {
+                $gransubtotal += $subtotal;
+                $graniva += $iva;
+                $grantotal += $total;
+            }
+        } else {
+            $gransubtotal += $subtotal;
+            $graniva += $iva;
+            $grantotal += $total;
+        }
 
         $filas[] = [
             'bag' => '',
+            'clave' => $r['CLAVE_ARTICULO'] ?? '',
+            'folio' => '',
             'referencia' => $r['CLAVE_ARTICULO'] ?? '',
             'cantidad' => (int)$r['REMISIONPROVARTICULO_CANTIDAD'],
             'descripcion' => $r['NOMBRE_ARTICULO'] ?? '',
@@ -89,6 +108,46 @@ if ($resp && $resp != 0) {
             'total' => $total,
         ];
     }
+}
+
+// Lógica especial UAP
+if ($esUap) {
+    $agrupado = [];
+    foreach ($filas as $f) {
+        $cve = $f['clave'];
+        // Si no tiene clave, usar la descripcion como fallback
+        $key = !empty($cve) ? $cve : $f['descripcion']; 
+        
+        if (!isset($agrupado[$key])) {
+            $agrupado[$key] = $f;
+            $agrupado[$key]['folios'] = !empty($f['folio']) ? [$f['folio']] : [];
+            $agrupado[$key]['lote'] = ''; // Clear lote for grouped items
+        } else {
+            $agrupado[$key]['cantidad'] += $f['cantidad'];
+            if (!empty($f['folio'])) {
+                $agrupado[$key]['folios'][] = $f['folio'];
+            }
+        }
+    }
+    
+    // Reconstruir referencias
+    $filas = [];
+    $paqueteFilas = [];
+    $otrasFilas = [];
+    foreach ($agrupado as $k => $f) {
+        if (!empty($f['folios'])) {
+            $f['referencia'] = $f['clave'] . ' / ' . implode(', ', $f['folios']);
+        } else {
+            $f['referencia'] = $f['clave'];
+        }
+        
+        if (substr(strtoupper($f['clave']), -4) === '-UAP') {
+            $paqueteFilas[] = $f;
+        } else {
+            $otrasFilas[] = $f;
+        }
+    }
+    $filas = array_merge($paqueteFilas, $otrasFilas);
 }
 
 $pdf = new TCPDF();
@@ -147,8 +206,8 @@ $html = '
         <td width="6%" class="b2 th">Nota(s) adicionales</td>
         <td width="6%" class="b2 th">Bag</td>
         <td width="14%" class="b2 th">Referencia/Folio</td>
-        <td width="8%" class="b2 th">Cantidad</td>
         <td width="30%" class="b2 th">Descripcion</td>
+        <td width="8%" class="b2 th">Cantidad</td>
         <td width="12%" class="b2 th">Lote</td>
         <td width="12%" class="b2 th">Precio U.</td>
         <td width="12%" class="b2 th">Total</td>
@@ -160,17 +219,23 @@ foreach ($filas as $f) {
         <td width="6%" class="b1" align="center">' . esc($f['notas_adicionales'] ?? '') . '</td>
         <td width="6%" class="b1" align="center">' . esc($f['bag']) . '</td>
         <td width="14%" class="b1" align="center"><strong>' . esc($f['referencia']) . '</strong></td>
-        <td width="8%" class="b1" align="center">' . esc($f['cantidad']) . '</td>
         <td width="30%" class="b1">' . esc($f['descripcion']) . '</td>
+        <td width="8%" class="b1" align="center">' . esc($f['cantidad']) . '</td>
         <td width="12%" class="b1" align="center">' . esc($f['lote']) . '</td>';
     if (isset($_GET['noprecios']) && $_GET['noprecios'] == '1') {
         $html .= '
         <td width="12%" class="b1" align="right"></td>
         <td width="12%" class="b1" align="right"></td>';
     } else {
-        $html .= '
-        <td width="12%" class="b1" align="right">$' . number_format($f['precio_u'], 2, '.', ',') . '</td>
-        <td width="12%" class="b1" align="right">$' . number_format($f['total'], 2, '.', ',') . '</td>';
+        if ($esUap && substr(strtoupper($f['clave']), -4) !== '-UAP') {
+            $html .= '
+            <td width="12%" class="b1" align="right"></td>
+            <td width="12%" class="b1" align="right"></td>';
+        } else {
+            $html .= '
+            <td width="12%" class="b1" align="right">$' . number_format($f['precio_u'], 2, '.', ',') . '</td>
+            <td width="12%" class="b1" align="right">$' . number_format($f['total'], 2, '.', ',') . '</td>';
+        }
     }
     $html .= '
     </tr>';
@@ -194,7 +259,7 @@ for ($i = 0; $i < $faltan; $i++) {
 
 ';
 
-if (!isset($_GET['noprecios']) || $_GET['noprecios'] != '1') {
+if ((!isset($_GET['noprecios']) || $_GET['noprecios'] != '1') && !$esUap) {
     $html .= '
     <tr>
         <td colspan="5" rowspan="3" style="border:0;"></td>
