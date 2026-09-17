@@ -10,17 +10,28 @@ class remisiones
             E.EVENTO_FOLIO, CAST(E.EVENTO_CONCEPTO AS VARCHAR(1000)) AS EVENTO_CONCEPTO,
             P.PROYECTO_FOLIO, CAST(P.PROYECTO_CONCEPTO AS VARCHAR(1000)) AS PROYECTO_CONCEPTO,
             (
-                COALESCE((
-                    SELECT SUM(REMISIONARTICULO_TOTAL) 
-                    FROM AMPAR_HIS_REMISIONESARTICULOS 
-                    WHERE REMISIONARTICULO_REMISIONID = RE.REMISION_ID
-                ), 0) 
-                +
-                COALESCE((
-                    SELECT SUM(REMISIONPROVARTICULO_TOTAL) 
-                    FROM AMPAR_HIS_REMISIONESPARTICULOS 
-                    WHERE REMISIONPROVARTICULO_REMISIONID = RE.REMISION_ID
-                ), 0)
+                CASE WHEN E.EVENTO_HOSPITALID = 25 THEN
+                    COALESCE((
+                        SELECT SUM(RP.REMISIONPROVARTICULO_TOTAL) 
+                        FROM AMPAR_HIS_REMISIONESPARTICULOS RP
+                        JOIN ARTICULOS AR ON AR.ARTICULO_ID = RP.REMISIONPROVARTICULO_ARTICULOID
+                        JOIN CLAVES_ARTICULOS CA ON CA.ARTICULO_ID = AR.ARTICULO_ID AND CA.ROL_CLAVE_ART_ID = 17
+                        WHERE RP.REMISIONPROVARTICULO_REMISIONID = RE.REMISION_ID
+                        AND CA.CLAVE_ARTICULO LIKE '%-UAP'
+                    ), 0)
+                ELSE
+                    COALESCE((
+                        SELECT SUM(REMISIONARTICULO_TOTAL) 
+                        FROM AMPAR_HIS_REMISIONESARTICULOS 
+                        WHERE REMISIONARTICULO_REMISIONID = RE.REMISION_ID
+                    ), 0) 
+                    +
+                    COALESCE((
+                        SELECT SUM(REMISIONPROVARTICULO_TOTAL) 
+                        FROM AMPAR_HIS_REMISIONESPARTICULOS 
+                        WHERE REMISIONPROVARTICULO_REMISIONID = RE.REMISION_ID
+                    ), 0)
+                END
             ) AS TOTAL
             FROM AMPAR_HIS_REMISIONES RE
             LEFT JOIN AMPAR_CONF_STATUS S ON STATUS_ID = REMISION_STATUS
@@ -345,6 +356,8 @@ class remisiones
     {
         $this->syncTableGenerator($db, 'AMPAR_HIS_REMISIONESPARTICULOS', 'REMISIONPROVARTICULO_ID');
         for ($i = 0; $i < count($idproveedores); $i++) {
+            $provIdSql = ($idproveedores[$i] == 0 || $idproveedores[$i] === 'NULL') ? 'NULL' : (int)$idproveedores[$i];
+            
             $sql = "
                 Insert into AMPAR_HIS_REMISIONESPARTICULOS
                 (         
@@ -362,7 +375,7 @@ class remisiones
                 VALUES
                 (
                     " . $remisionid . ",
-                    " . $idproveedores[$i] . ",
+                    " . $provIdSql . ",
                     " . $articulos[$i] . ",
                     " . $cantidades[$i] . ",
                     " . $cusubtotales[$i] . ",
@@ -654,6 +667,8 @@ class remisiones
         $iva = $cuiva * $cantidad;
         $tot = $cutot * $cantidad;
 
+        $provIdSql = ($proveedorid === 'NULL') ? 'NULL' : $proveedorid;
+
         $this->syncTableGenerator($db, 'AMPAR_HIS_REMISIONESPARTICULOS', 'REMISIONPROVARTICULO_ID');
         // Insert
         $db->execute("
@@ -662,7 +677,7 @@ class remisiones
             REMISIONPROVARTICULO_CANTIDAD, REMISIONPROVARTICULO_CUSUBTOTAL, REMISIONPROVARTICULO_CUIVA, REMISIONPROVARTICULO_CUTOTAL,
             REMISIONPROVARTICULO_SUBTOTAL, REMISIONPROVARTICULO_IVA, REMISIONPROVARTICULO_TOTAL)
             VALUES
-            ({$remisionid}, {$proveedorid}, {$articuloid},
+            ({$remisionid}, {$provIdSql}, {$articuloid},
             {$cantidad}, {$cusub}, {$cuiva}, {$cutot},
             {$sub}, {$iva}, {$tot})
         ");
@@ -677,9 +692,13 @@ class remisiones
         if ($ev && $ev != 0) {
             $usersesion = $_SESSION['ampar']['usuario'] ?? [];
             $ipuser = bitacora::getip();
-            $prov = $db->query("SELECT NOMBRE FROM PROVEEDORES WHERE PROVEEDOR_ID = {$proveedorid}");
+            $provNombre = 'PAQUETE UAP';
+            if ($provIdSql !== 'NULL') {
+                $prov = $db->query("SELECT NOMBRE FROM PROVEEDORES WHERE PROVEEDOR_ID = {$provIdSql}");
+                $provNombre = ($prov && $prov!=0) ? $prov[0]['NOMBRE'] : '';
+            }
             $art  = $db->query("SELECT NOMBRE FROM ARTICULOS   WHERE ARTICULO_ID = {$articuloid}");
-            $txt = 'SE AGREGÓ PROVEEDOR/ARTÍCULO <b>' . htmlentities(($prov[0]['NOMBRE'] ?? '') . ' - ' . ($art[0]['NOMBRE'] ?? '')) . '</b> CANT: ' . $cantidad . ' A REMISIÓN (Evento ' . $ev[0]['EVENTO_FOLIO'] . ')';
+            $txt = 'SE AGREGÓ PROVEEDOR/ARTÍCULO <b>' . htmlentities($provNombre . ' - ' . ($art[0]['NOMBRE'] ?? '')) . '</b> CANT: ' . $cantidad . ' A REMISIÓN (Evento ' . $ev[0]['EVENTO_FOLIO'] . ')';
             $db->execute("
             INSERT INTO AMPAR_BITACORA
             (BITACORA_FECHA, BITACORA_COMENTARIO, BITACORA_USUARIOID, BITACORA_USUARIO, BITACORA_USUARIOIP, BITACORA_SUCURSALID_MS, BITACORA_ALMACENID, BITACORA_STOCKID, BITACORA_EVENTOID)

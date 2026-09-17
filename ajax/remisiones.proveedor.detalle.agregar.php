@@ -4,9 +4,10 @@ $proveedorid= (int)($_POST['proveedorid'] ?? 0);
 $articuloid = (int)($_POST['articuloid'] ?? 0);
 $cantidad   = (int)($_POST['cantidad'] ?? 0);
 
-if (!$remisionid || !$proveedorid || !$articuloid || $cantidad<=0){
+if (!$remisionid || !$articuloid || $cantidad<=0){
   echo "Parámetros incompletos"; exit;
 }
+$proveedorid = $proveedorid > 0 ? $proveedorid : 'NULL';
 
 try{
   $rem = new remisiones();

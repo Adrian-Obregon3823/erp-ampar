@@ -122,6 +122,27 @@
                                             </div>
                                         </div>
                                     </div>
+                                    <div class="row mb-3" id="contenedor-paquete-uap">
+                                        <div class="col-12">
+                                            <div class="card shadow-sm border-0" style="border-radius: 8px; background-color: #e9ecef;">
+                                                <div class="card-body p-3">
+                                                    <label for="selectPaqueteUap"><b>Agregar Paquete UAP:</b></label>
+                                                    <div class="row align-items-center">
+                                                        <div class="col-md-9">
+                                                            <select class="form-control" id="selectPaqueteUap">
+                                                                <option value="">Cargando Paquetes...</option>
+                                                            </select>
+                                                        </div>
+                                                        <div class="col-md-3 mt-2 mt-md-0">
+                                                            <button type="button" class="btn btn-info w-100" id="btnAgregarPaqueteUap">
+                                                                Agregar Paquete
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                     <div class="table-responsive mt-3">
                                         <table class="table">
                                             <thead>
@@ -946,6 +967,85 @@
                     return false;
                 }
             });
+
+            // Llenar select de Paquetes UAP
+            var opcionesPaquete = '<option value="">Selecciona un paquete...</option>';
+            $.each(resultarticulos, function(i, obj) {
+                var ref = (obj.CLAVE_ARTICULO || "").toUpperCase();
+                if (ref.endsWith("-UAP")) {
+                    var sub = parseFloat(obj.SUBTOTAL) || 0;
+                    var iva = parseFloat(obj.IVA) || 0;
+                    var tot = parseFloat(obj.TOTAL) || 0;
+                    opcionesPaquete += `<option value="${obj.ID}" data-cve="${obj.CLAVE_ARTICULO}" data-nombre="${obj.NOMBRE}" data-sub="${sub}" data-iva="${iva}" data-tot="${tot}">${obj.NOMBRE} (${obj.CLAVE_ARTICULO})</option>`;
+                }
+            });
+            $("#selectPaqueteUap").html(opcionesPaquete);
+
+            $("#btnAgregarPaqueteUap").click(function() {
+                var sel = $("#selectPaqueteUap option:selected");
+                var id = sel.val();
+                if (!id) {
+                    Swal.fire({
+                        text: "Seleccione un paquete UAP primero.",
+                        icon: "warning"
+                    });
+                    return;
+                }
+                var cve = sel.data("cve");
+                var nom = sel.data("nombre");
+                var sub = parseFloat(sel.data("sub")) || 0;
+                var iva = parseFloat(sel.data("iva")) || 0;
+                var tot = parseFloat(sel.data("tot")) || 0;
+
+                var nuevaFila = `
+                <tr>
+                    <td>
+                        <input type="hidden" name="proveedorid[]" value="0">
+                        <input type="text" class="form-control" value="PAQUETE UAP" readonly>
+                    </td>
+                    <td>
+                        <input type="text" class="form-control" value="${cve}" readonly>
+                    </td>
+                    <td>
+                        <input type="hidden" name="idarticulofiltro[]" value="${id}">
+                        <input type="hidden" name="preciounitario_sub[]" value="${sub}">
+                        <input type="hidden" name="preciounitario_iva[]" value="${iva}">
+                        <input type="hidden" name="preciounitario_total[]" value="${tot}">
+                        <input type="text" class="form-control" value="${nom}" readonly>
+                    </td>
+                    <td>
+                        <input type="text" class="form-control" name="costounitario[]" value="${sub.toFixed(2)}" readonly>
+                    </td>
+                    <td>
+                        <input type="number" step="0.01" class="form-control campo-subtotal-proveedor" name="subproveedor[]" value="${sub.toFixed(2)}">
+                    </td>
+                    <td>
+                        <input type="number" step="0.01" class="form-control campo-iva-proveedor" name="ivaproveedor[]" value="${iva.toFixed(2)}">
+                    </td>
+                    <td>
+                        <input type="number" step="0.01" class="form-control campo-total-proveedor" name="totalproveedor[]" value="${tot.toFixed(2)}">
+                    </td>
+                    <td>
+                        <input type="number" class="form-control" name="cantidad[]" value="1" min="1" readonly>
+                    </td>
+                    <td>
+                        <button type="button" class="btn btn-danger btn-sm eliminarFila">
+                            <i class="menu-icon mdi mdi-delete-forever"></i>
+                        </button>
+                    </td>
+                </tr>
+                `;
+                $("#productosBody").append(nuevaFila);
+                actualizarTotal();
+                $("#selectPaqueteUap").val("");
+                Swal.fire({
+                    text: "Paquete UAP agregado correctamente.",
+                    icon: "success",
+                    timer: 1500,
+                    showConfirmButton: false
+                });
+            });
+
 
             // Autocomplete para pestaña Otros
             $("#articulofiltro_otros").autocomplete({

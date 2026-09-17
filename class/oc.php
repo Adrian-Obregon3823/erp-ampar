@@ -265,6 +265,107 @@ class oc{
         }
     }
 
+    function editarManual($ocId, $almacenId, $proveedorId, $statusId, $articulos, $requerimientoMaterialId, $descuentoGlobalPct) {
+        $db = new FirebirdConnection(false);
+        try {
+            $almacenId = (int)$almacenId;
+            $proveedorId = (int)$proveedorId;
+            $statusId = (int)$statusId;
+            $ocId = (int)$ocId;
+            
+            $descuentoGlobalPct = (float)$descuentoGlobalPct;
+            if ($descuentoGlobalPct < 0) $descuentoGlobalPct = 0;
+            if ($descuentoGlobalPct > 100) $descuentoGlobalPct = 100;
+            
+            $headerSubtotalNeto = 0;
+            $headerImpuestos = 0;
+            
+            // Handle multiple requerimientos
+            $reqIds = [];
+            if (is_array($requerimientoMaterialId)) {
+                $reqIds = $requerimientoMaterialId;
+            } elseif ($requerimientoMaterialId > 0) {
+                $reqIds[] = $requerimientoMaterialId;
+            }
+            
+            $legacyReqId = count($reqIds) > 0 ? $reqIds[0] : null;
+
+            // Delete old details and requirements
+            $db->execute("DELETE FROM AMPAR_OCDET WHERE OCDET_OCID = ?", [$ocId]);
+            $db->execute("DELETE FROM AMPAR_HIS_OC_REQ WHERE OCREQ_OCID = ?", [$ocId]);
+            
+            // Re-insert into AMPAR_HIS_OC_REQ
+            if (count($reqIds) > 0) {
+                foreach ($reqIds as $rId) {
+                    $rId = (int)$rId;
+                    if ($rId > 0) {
+                        $db->execute("INSERT INTO AMPAR_HIS_OC_REQ (OCREQ_OCID, OCREQ_REQID) VALUES (?, ?)", [$ocId, $rId]);
+                    }
+                }
+            }
+            
+            foreach ($articulos as $ar) {
+                $artId = (int)$ar['articulo_id'];
+                $qty = (float)$ar['cantidad'];
+                $cost = (float)$ar['costo'];
+                $descPct = (float)($ar['descuento_pct'] ?? 0);
+                $ivaPct = (float)($ar['iva_pct'] ?? 16);
+                
+                $descTipo = $ar['desc_tipo'] ?? '';
+                $descMotivo = $ar['desc_motivo'] ?? '';
+                
+                // Math calculations
+                $itemSubtotalGross = $qty * $cost;
+                $itemDescAmount = $itemSubtotalGross * ($descPct / 100);
+                $itemSubtotalNeto = $itemSubtotalGross - $itemDescAmount;
+                
+                $itemGlobalDescAmount = $itemSubtotalNeto * ($descuentoGlobalPct / 100);
+                $itemFinalBase = $itemSubtotalNeto - $itemGlobalDescAmount;
+                
+                $itemIva = $itemFinalBase * ($ivaPct / 100);
+                $itemTotalDisplay = $itemSubtotalNeto + ($itemSubtotalNeto * ($ivaPct / 100));
+                
+                $headerSubtotalNeto += $itemSubtotalNeto;
+                $headerImpuestos += $itemIva;
+                
+                $sqlDet = "
+                    INSERT INTO AMPAR_OCDET 
+                    (OCDET_OCID, OCDET_ARTICULOID, OCDET_CANTIDAD, OCDET_PRECIO, OCDET_DESCUENTO_PCT, OCDET_IVA_PCT, OCDET_SUBTOTAL, OCDET_TOTAL, OCDET_DESC_TIPO, OCDET_DESC_MOTIVO)
+                    VALUES 
+                    (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ";
+                $db->execute($sqlDet, [$ocId, $artId, $qty, $cost, $descPct, $ivaPct, $itemSubtotalNeto, $itemTotalDisplay, $descTipo, $descMotivo]);
+            }
+            
+            // Calculate global discount amount
+            $globalDescAmount = $headerSubtotalNeto * ($descuentoGlobalPct / 100);
+            $headerTotal = $headerSubtotalNeto - $globalDescAmount + $headerImpuestos;
+            
+            // Update header
+            $sqlUpdate = "UPDATE AMPAR_OC SET OC_PROVEEDORID = ?, OC_STATUS = ?, OC_SUBTOTAL = ?, OC_DESCUENTO = ?, OC_IMPUESTOS = ?, OC_TOTAL = ?, OC_ALMACENID = ?, OC_REQUERIMIENTOMATERIALID = ? WHERE OC_ID = ?";
+            $db->execute($sqlUpdate, [$proveedorId, $statusId, $headerSubtotalNeto, $globalDescAmount, $headerImpuestos, $headerTotal, $almacenId, $legacyReqId, $ocId]);
+            
+            // Actualizar status de los requerimientos de material vinculados
+            if (count($reqIds) > 0) {
+                require_once __DIR__ . '/requerimientosmaterial.php';
+                $reqMat = new requerimientosmaterial();
+                foreach ($reqIds as $rId) {
+                    $reqMat->actualizarStatusAutomatico($rId);
+                }
+            }
+            
+            $db->commit();
+            $db->close();
+            
+            return ['oc_id' => $ocId, 'folio' => ''];
+            
+        } catch (Throwable $e) {
+            $db->rollback();
+            $db->close();
+            throw $e;
+        }
+    }
+
     function getSugerenciasCompra($sucursalId) {
         $db = new FirebirdConnection();
         $sucursalId = (int)$sucursalId;
