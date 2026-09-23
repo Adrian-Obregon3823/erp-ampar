@@ -11,14 +11,32 @@ if (!empty($sucursales)) {
         $sucursalesIds[] = $suc['SUCURSAL_ID'];
     }
 }
-$sucursalIdsStr = empty($sucursalesIds) ? "0" : implode(',', $sucursalesIds);
+$almacenes = $_SESSION['ampar']['almacenes'] ?? [];
+$almacenesIds = [];
+if (!empty($almacenes)) {
+    foreach ($almacenes as $alm) {
+        $almacenesIds[] = $alm['ALMACEN_ID'];
+    }
+}
 
 $db = new FirebirdConnection();
 
 // Obtener los traspasos enviados (status 9) al almacén(es) del usuario
-$condicionSucursal = "";
+$condicionUsuario = "";
 if (!$GLOBALS['isAdmin']) {
-    $condicionSucursal = "AND AD.ALMACEN_SUCURSAL_MS IN ($sucursalIdsStr)";
+    $conds = [];
+    if (!empty($sucursalesIds)) {
+        $conds[] = "AD.ALMACEN_SUCURSAL_MS IN (" . implode(',', $sucursalesIds) . ")";
+    }
+    if (!empty($almacenesIds)) {
+        $conds[] = "AD.ALMACEN_ID IN (" . implode(',', $almacenesIds) . ") OR AD.ALMACEN_ALMACEN_MS IN (" . implode(',', $almacenesIds) . ")";
+    }
+    
+    if (!empty($conds)) {
+        $condicionUsuario = "AND (" . implode(' OR ', $conds) . ")";
+    } else {
+        $condicionUsuario = "AND 1 = 0";
+    }
 }
 
 $sqlTraspasos = "
@@ -27,7 +45,7 @@ $sqlTraspasos = "
     LEFT JOIN AMPAR_HIS_ALMACEN A ON A.ALMACEN_ID = T.TRASPASO_DEALMACENID
     LEFT JOIN AMPAR_HIS_ALMACEN AD ON AD.ALMACEN_ID = T.TRASPASO_AALMACENID
     WHERE T.TRASPASO_STATUS = 9 
-    $condicionSucursal
+    $condicionUsuario
     AND NOT EXISTS (SELECT 1 FROM AMPAR_DISPUTAS D WHERE D.DISPUTA_TRASPASOID = T.TRASPASO_ID AND D.DISPUTA_STATUS = 1)
 ";
 $traspasos = $db->query($sqlTraspasos);

@@ -56,10 +56,19 @@ class login
                     WHERE USUARIOP_USUARIOID = " . $usuarioID . "
                 ";
                 $menu = $db->query($sqlMenu);
+                // 🔹 Almacenes asignados
+                $sqlAlmacenes = "
+                    SELECT ALMACEN.ALMACEN_ID, ALMACEN.ALMACEN_NOMBRE
+                    FROM AMPAR_CAT_USUARIOSALMACENES
+                    LEFT JOIN AMPAR_HIS_ALMACEN ALMACEN ON ALMACEN_ID = USUARIOSALMACENES_ALMACENID
+                    WHERE USUARIOSALMACENES_USUARIOID = " . $usuarioID . "
+                ";
+                $almacenes = $db->query($sqlAlmacenes);
 
                 $_SESSION['ampar'] = [
                     'usuario' => $usuarioData,
                     'sucursales' => $sucursales,
+                    'almacenes' => $almacenes,
                     'perfiles' => $perfiles,
                     'menu' => $menu,
                     'idsesion' => 'Ampar2025!'

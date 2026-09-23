@@ -774,7 +774,7 @@ class maletas
         return $result;
     }
 
-    function getmaletas($sucursales_ids = [], $ver_desactivados = false)
+    function getmaletas($sucursales_ids = [], $ver_desactivados = false, $almacenes_ids = [])
     {
         $db = new FirebirdConnection(true);
         $sql = "
@@ -822,8 +822,15 @@ class maletas
             $sql .= " AND a.DELETED_AT IS NULL AND (a.ALMACEN_STATUS IS NULL OR a.ALMACEN_STATUS <> 18)";
         }
 
-        if (!empty($sucursales_ids)) {
-            $sql .= " AND a.ALMACEN_SUCURSAL_MS IN (" . implode(',', $sucursales_ids) . ")";
+        if (!empty($sucursales_ids) || !empty($almacenes_ids)) {
+            $conds = [];
+            if (!empty($sucursales_ids)) {
+                $conds[] = "a.ALMACEN_SUCURSAL_MS IN (" . implode(',', $sucursales_ids) . ")";
+            }
+            if (!empty($almacenes_ids)) {
+                $conds[] = "(a.ALMACEN_ID IN (" . implode(',', $almacenes_ids) . ") OR a.ALMACEN_ALMACEN_MS IN (" . implode(',', $almacenes_ids) . "))";
+            }
+            $sql .= " AND (" . implode(' OR ', $conds) . ")";
         }
         $result = $db->query($sql);
         $db->close();

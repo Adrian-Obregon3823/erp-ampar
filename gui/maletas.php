@@ -1,4 +1,4 @@
-﻿<?php include_once("../includes/sesion.php"); ?>
+<?php include_once("../includes/sesion.php"); ?>
 <?php include_once("../includes/includes.php"); ?>
 <?php
 /*
@@ -53,6 +53,7 @@
                         $maletas = new maletas();
 
                         $sucursales_ids = [];
+                        $almacenes_ids = [];
                         if (empty($GLOBALS['isAdmin'])) {
                           $sucursales_usuario = $_SESSION['ampar']['sucursales'] ?? [];
                           foreach ($sucursales_usuario as $sucursal) {
@@ -60,12 +61,20 @@
                               $sucursales_ids[] = (int)$sucursal['SUCURSAL_ID'];
                             }
                           }
-                          if (empty($sucursales_ids)) {
-                            $sucursales_ids = [-1]; // Usuario normal sin sucursales asignadas no debe ver nada
+                          
+                          $almacenes_usuario = $_SESSION['ampar']['almacenes'] ?? [];
+                          foreach ($almacenes_usuario as $almacen) {
+                            if (isset($almacen['ALMACEN_ID'])) {
+                              $almacenes_ids[] = (int)$almacen['ALMACEN_ID'];
+                            }
+                          }
+
+                          if (empty($sucursales_ids) && empty($almacenes_ids)) {
+                            $sucursales_ids = [-1]; // Usuario normal sin sucursales ni almacenes no debe ver nada
                           }
                         }
 
-                        $res = $maletas->getmaletas($sucursales_ids, $ver_desactivados);
+                        $res = $maletas->getmaletas($sucursales_ids, $ver_desactivados, $almacenes_ids);
 
                         if ($res <> 0) {
                             $unique_almacenes = [];
