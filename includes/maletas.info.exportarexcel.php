@@ -31,6 +31,7 @@ $sheet->fromArray($headers, NULL, 'A1');
 $sheet->getStyle('A1:F1')->getFont()->setBold(true);
 
 $row = 2;
+$totalProductos = 0;
 foreach ($res as $r) {
     if ($r['STOCK_STOCKSTATUSID'] <> ''){
         $sheet->setCellValueExplicit("A$row", $r['STOCK_FOLIO'], DataType::TYPE_STRING);
@@ -40,12 +41,18 @@ foreach ($res as $r) {
         $sheet->setCellValueExplicit("E$row", $r['STOCK_CADUCIDAD'], DataType::TYPE_STRING);
         $sheet->setCellValueExplicit("F$row", $r['STOCK_SERIE'], DataType::TYPE_STRING);
         $row++;
+        $totalProductos++;
     }
 }
 
 // Poner toda la columna A en negrita (desde fila 2 hasta la última fila con datos)
 $lastRow = $row - 1;
 $sheet->getStyle("A2:A$lastRow")->getFont()->setBold(true);
+
+// Fila de Total (todo en una sola celda, sin fondo)
+$totalRow = $row;
+$sheet->setCellValue("A$totalRow", "TOTAL: $totalProductos");
+$sheet->getStyle("A$totalRow")->getFont()->setBold(true);
 
 // Auto tamaño de columnas
 foreach (range('A', 'F') as $col) {

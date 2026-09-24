@@ -76,6 +76,9 @@ $resarticulos = $maletas->getinfomaletaexistenciasbymaletaid(base64_decode($_GET
                         <button id="btnDescargarExcelMaleta" class="btn btn-success">
                             <i class="bi bi-file-earmark-excel-fill me-1"></i> Descargar Excel
                         </button>
+                        <button id="btnDescargarPdfMaleta" class="btn btn-danger">
+                            <i class="bi bi-file-earmark-pdf-fill me-1"></i> Descargar PDF
+                        </button>
                         <button id="btnPorcentajesMaleta" class="btn btn-warning">
                             <i class="bi bi-file-earmark-excel-fill me-1"></i> Porcentajes
                         </button>
@@ -259,7 +262,32 @@ $resarticulos = $maletas->getinfomaletaexistenciasbymaletaid(base64_decode($_GET
                         confirmButton: 'btn btn-success' // usa clases de Bootstrap
                     }
                 });
-                //console.error(error);
+             });
+    });
+
+    // Descargar PDF
+    document.getElementById("btnDescargarPdfMaleta").addEventListener("click", function() {
+        const valorMaletaId = "<?= rawurlencode($_GET['maletaid']) ?>";
+        document.getElementById("loading").style.display = "block";
+
+        fetch(`../gdocs/maletas.formato.pdf.php?maletaid=${valorMaletaId}`, { method: 'GET' })
+            .then(async response => {
+                if (!response.ok) throw new Error("Error al generar el PDF.");
+                return response.blob();
+            })
+            .then(blob => {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = "Maleta.<?= $info[0]['ALMACEN_FOLIO'] ?>.<?= date("Y-m-d") ?>.pdf";
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                window.URL.revokeObjectURL(url);
+            })
+            .catch(error => {
+                Swal.fire({ html: error.message, icon: "warning",
+                    customClass: { confirmButton: 'btn btn-danger' } });
             })
             .finally(() => {
                 document.getElementById("loading").style.display = "none";
