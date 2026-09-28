@@ -8,8 +8,10 @@ $perfilid  = $_SESSION['ampar']['usuario']['USUARIO_PERFILID'] ?? 0;
 
 $db = new FirebirdConnection();
 
+$isAdmin = $GLOBALS['isAdmin'] ?? false;
+
 // Administrador ve todo, otros solo ven las suyas
-$filtroUser = ($perfilid == 1) ? "" : " AND (D.DISPUTA_USUARIO_CREADOR = $usuarioid OR D.DISPUTA_USUARIO_DESTINO = $usuarioid) ";
+$filtroUser = $isAdmin ? "" : " AND (D.DISPUTA_USUARIO_CREADOR = $usuarioid OR D.DISPUTA_USUARIO_DESTINO = $usuarioid) ";
 
 $sql = "
     SELECT D.*, 
@@ -95,7 +97,7 @@ $db->close();
                                                         </td>
                                                         <td>
                                                             <button class="btn btn-sm btn-info" onclick="verDisputa(<?= $d['DISPUTA_ID'] ?>)">
-                                                                <i class="mdi mdi-eye"></i> <?= ($perfilid == 1 && $d['DISPUTA_STATUS'] == 1) ? 'Resolver' : 'Ver Detalles' ?>
+                                                                <i class="mdi mdi-eye"></i> <?= ($isAdmin && $d['DISPUTA_STATUS'] == 1) ? 'Resolver' : 'Ver Detalles' ?>
                                                             </button>
                                                         </td>
                                                     </tr>
