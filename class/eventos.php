@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 class eventos
 {
@@ -47,16 +47,29 @@ class eventos
             ON EC.STATUS_ID = EVENTO_CHOFERIDSTATUS
         LEFT JOIN AMPAR_CONF_STATUS EG 
             ON EG.STATUS_ID = EVENTO_STATUSGENERAL
-        WHERE (
-            EVENTO_SUCURSALID IN (
-                SELECT USUARIOSSUCURSALES_SUCURSALID
-                FROM AMPAR_CAT_USUARIOSSUCURSALES
-                WHERE USUARIOSSUCURSALES_USUARIOID = " . $usuarioid . "
-            )
-            OR EVENTO_ESPECIALISTAID = " . $usuarioid . "
-            OR EVENTO_CHOFERID = " . $usuarioid . "
-        )
     ";
+
+        // 🔹 Verificar si es Administrador (TIPOID = 1)
+        $isAdmin = false;
+        $sqlAdmin = "SELECT FIRST 1 1 FROM AMPAR_CAT_USUARIOSTIPOPERMISOS WHERE USUARIOSTIPOPERMISOS_USUARIOID = " . $usuarioid . " AND USUARIOSTIPOPERMISOS_TIPOID = 1";
+        $resAdmin = $db->query($sqlAdmin);
+        if(!empty($resAdmin)) {
+            $isAdmin = true;
+        }
+
+        if ($isAdmin) {
+            $sql .= " WHERE 1=1 ";
+        } else {
+            $sql .= " WHERE (
+                EVENTO_SUCURSALID IN (
+                    SELECT USUARIOSSUCURSALES_SUCURSALID
+                    FROM AMPAR_CAT_USUARIOSSUCURSALES
+                    WHERE USUARIOSSUCURSALES_USUARIOID = " . $usuarioid . "
+                )
+                OR EVENTO_ESPECIALISTAID = " . $usuarioid . "
+                OR EVENTO_CHOFERID = " . $usuarioid . "
+            ) ";
+        }
 
         if ($responsableid <> "") {
             $sql .= " AND (EVENTO_ESPECIALISTAID = " . $responsableid . " OR EVENTO_CHOFERID = " . $responsableid . ")";
