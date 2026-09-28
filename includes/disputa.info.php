@@ -19,7 +19,7 @@ $db = new FirebirdConnection();
 // Traer info de la disputa
 $sql = "
     SELECT D.*, 
-           T.TRASPASO_FOLIO, T.TRASPASO_FACTURA, T.TRASPASO_DOCUMENTO2, T.TRASPASO_EVIDENCIA, T.TRASPASO_GUIA,
+           T.TRASPASO_FOLIO,
            U1.USUARIO_NOMBRE as NOMBRE_CREADOR,
            U2.USUARIO_NOMBRE as NOMBRE_DESTINO
     FROM AMPAR_DISPUTAS D

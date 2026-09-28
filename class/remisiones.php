@@ -667,7 +667,7 @@ class remisiones
         $iva = $cuiva * $cantidad;
         $tot = $cutot * $cantidad;
 
-        $provIdSql = ($proveedorid === 'NULL') ? 'NULL' : $proveedorid;
+        $provIdSql = (empty($proveedorid) || $proveedorid === 'NULL' || (int)$proveedorid === 0) ? 'NULL' : (int)$proveedorid;
 
         $this->syncTableGenerator($db, 'AMPAR_HIS_REMISIONESPARTICULOS', 'REMISIONPROVARTICULO_ID');
         // Insert
