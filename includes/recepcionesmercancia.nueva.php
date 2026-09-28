@@ -40,7 +40,7 @@ $almacen_fijo_id = 1;
                 <?php 
                 if ($ocs <> 0) {
                     foreach ($ocs as $o) { 
-                        if ($o['OC_STATUS'] != 19) continue; // Solo mostrar OCs Confirmadas (ID 19)
+                        if ($o['OC_STATUS'] != 19 && $o['OC_STATUS'] != 27) continue; // Solo mostrar OCs Confirmadas (ID 19) y Parciales (ID 27)
                 ?>
                     <option value="<?= $o['OC_ID'] ?>">Folio OC: <?= $o['OC_FOLIO'] ?> (Destino: <?=$o['NOMBRE']?><?= !empty($o['ALMACEN_NOMBRE']) ? ' - ' . $o['ALMACEN_NOMBRE'] : '' ?>)</option>
                 <?php 

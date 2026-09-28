@@ -22,6 +22,13 @@ if ($almacenId === 'sin_almacen') {
     $where .= " AND ST.STOCK_ALMACENIDACTUAL = " . (int)$almacenId;
 }
 
+$busqueda = isset($_GET['busqueda']) ? trim($_GET['busqueda']) : '';
+if (!empty($busqueda)) {
+    // Escapar búsqueda
+    $busqSql = str_replace("'", "''", $busqueda);
+    $where .= " AND (UPPER(ST.STOCK_LOTE) LIKE UPPER('%{$busqSql}%') OR UPPER(ST.STOCK_SERIE) LIKE UPPER('%{$busqSql}%') OR UPPER(ST.STOCK_FOLIO) LIKE UPPER('%{$busqSql}%'))";
+}
+
 $sql = "
     SELECT 
         ST.STOCK_SERIE,

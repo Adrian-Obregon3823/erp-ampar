@@ -1,4 +1,4 @@
-<?php include_once("../includes/sesion.php"); ?>
+﻿<?php include_once("../includes/sesion.php"); ?>
 <?php include_once("../includes/includes.php"); ?>
 <?php
 include_once("../class/inventarioglobal.php");
@@ -517,17 +517,20 @@ $nombreVista = $esGlobal ? 'Global (Todos los Almacenes)' : htmlspecialchars($al
                                         <!-- BARRA DE BÚSQUEDA -->
                                         <div class="search-row mt-3">
                                             <label class="text-muted mb-2" style="font-size:13px;"><strong>Buscar Artículo</strong> (Referencia o Descripción)</label>
-                                            <div class="input-group">
-                                                <input type="text" name="busqueda" class="form-control" placeholder="Escriba para buscar..." value="<?= htmlspecialchars($busqueda) ?>" style="height: auto; padding: 10px 15px;">
-                                                <div class="input-group-append">
-                                                    <button type="submit" class="btn btn-primary text-white" style="padding-left: 25px; padding-right: 25px; border-top-right-radius: 4px; border-bottom-right-radius: 4px;">
-                                                        <i class="mdi mdi-magnify"></i> Buscar
-                                                    </button>
+                                            <div class="d-flex flex-column flex-sm-row">
+                                                <div class="input-group mb-2 mb-sm-0 w-100" style="flex-grow: 1;">
+                                                    <input type="text" name="busqueda" class="form-control" placeholder="Escriba para buscar..." value="<?= htmlspecialchars($busqueda) ?>" style="height: auto; padding: 10px 15px;">
+                                                    <div class="input-group-append">
+                                                        <button type="submit" class="btn btn-primary text-white" style="padding-left: 15px; padding-right: 15px; border-top-right-radius: 4px; border-bottom-right-radius: 4px;">
+                                                            <i class="mdi mdi-magnify"></i> <span class="d-none d-sm-inline ml-1">Buscar</span>
+                                                        </button>
+                                                    </div>
                                                 </div>
-                                                <button type="button" class="btn btn-success text-white ml-3" onclick="exportarExcel()" style="padding-left: 20px; padding-right: 20px; border-radius: 4px;">
+                                                <button type="button" class="btn btn-success text-white ml-sm-2" onclick="exportarExcel()" style="padding-left: 20px; padding-right: 20px; border-radius: 4px; white-space: nowrap;">
                                                     <i class="mdi mdi-file-excel"></i> Exportar
                                                 </button>
                                             </div>
+
                                         </div>
                                     </form>
                                 </div>
@@ -1319,9 +1322,7 @@ $nombreVista = $esGlobal ? 'Global (Todos los Almacenes)' : htmlspecialchars($al
                     type: 'GET',
                     cache: false,
                     data: {
-                        articulo_id: articuloId,
-                        almacen_id: almacenId
-                    },
+                        articulo_id: articuloId, almacen_id: almacenId, busqueda: '<?= addslashes($busqueda) ?>' },
                     success: function(res) {
                         var resHTML = '<div class="table-responsive col-md-9 px-0 ml-3"><table class="table table-sm table-borderless mb-0" style="background-color: transparent;">' +
                             res +
@@ -1362,9 +1363,7 @@ $nombreVista = $esGlobal ? 'Global (Todos los Almacenes)' : htmlspecialchars($al
                     type: 'GET',
                     cache: false,
                     data: {
-                        articulo_id: articuloId,
-                        almacen_id: almacenId
-                    },
+                        articulo_id: articuloId, almacen_id: almacenId, busqueda: '<?= addslashes($busqueda) ?>' },
                     success: function(res) {
                         var resHTML = '<div class="table-responsive px-0"><table class="table table-sm table-borderless mb-0 lotes-table-mobile" style="background-color: transparent;">' +
                             res +
@@ -1416,8 +1415,7 @@ $nombreVista = $esGlobal ? 'Global (Todos los Almacenes)' : htmlspecialchars($al
                         lote: lote,
                         caducidad: caducidad,
                         tiene_serie: tieneSerie,
-                        tiene_lote: tieneLote
-                    },
+                        tiene_lote: tieneLote, busqueda: '<?= addslashes($busqueda) ?>' },
                     success: function(res) {
                         tr.next('.temp-loading').remove();
                         tr.after(res);
@@ -1465,10 +1463,7 @@ $nombreVista = $esGlobal ? 'Global (Todos los Almacenes)' : htmlspecialchars($al
                     type: 'GET',
                     cache: false,
                     data: {
-                        articulo_id: articuloId,
-                        almacen_id: maletaId,
-                        es_maleta: 1
-                    },
+                        articulo_id: articuloId, almacen_id: maletaId, es_maleta: 1, busqueda: '<?= addslashes($busqueda) ?>' },
                     success: function(res) {
                         var html = '<div class="table-responsive"><table class="table table-sm table-borderless mb-0 lotes-maleta-table">' +
                             res + '</table></div>';
@@ -1512,10 +1507,7 @@ $nombreVista = $esGlobal ? 'Global (Todos los Almacenes)' : htmlspecialchars($al
                     type: 'GET',
                     cache: false,
                     data: {
-                        articulo_id: articuloId,
-                        almacen_id: maletaId,
-                        es_maleta: 1
-                    },
+                        articulo_id: articuloId, almacen_id: maletaId, es_maleta: 1, busqueda: '<?= addslashes($busqueda) ?>' },
                     success: function(res) {
                         var html = '<div class="table-responsive px-0"><table class="table table-sm table-borderless mb-0 lotes-maleta-table">' +
                             res + '</table></div>';
@@ -1667,6 +1659,48 @@ $nombreVista = $esGlobal ? 'Global (Todos los Almacenes)' : htmlspecialchars($al
             </div>
         </div>
     </div>
+<script>
+(function(){
+<?php if (!empty(trim($busqueda))): ?>
+    ['seccion-kpis','seccion-maletas','bloque-maletas-listado', 'listadoMaletasContinuo'].forEach(function(id){
+        var el = document.getElementById(id); if (el) el.style.display = 'none';
+    });
+    var banner = document.getElementById('banner-busqueda');
+    if (banner) {
+        banner.style.display = 'block';
+        banner.innerHTML = '<i class="mdi mdi-magnify mr-1"></i> Resultados para: <strong>' + <?= json_encode(htmlspecialchars(trim($busqueda))) ?> + '</strong>&nbsp;<a href="?almacen_id=<?= rawurlencode($almacen_id) ?>" class="text-danger ml-3" style="font-size:12px;"><i class="mdi mdi-close-circle"></i> Limpiar</a>';
+    }
+    document.querySelectorAll('[id^="fam_"],[id*="_div_"],[id*="_cat_"]').forEach(function(el){ el.style.display='block'; });
+    document.querySelectorAll('.fam-chevron,.div-chevron,.cat-chevron').forEach(function(el){ el.classList.remove('mdi-chevron-down'); el.classList.add('mdi-chevron-up'); });
+    
+    // Auto-expandir articulos
+    setTimeout(function() {
+        document.querySelectorAll('.fila-articulo').forEach(function(el){ 
+            if(!el.classList.contains('shown-dropdown')) { el.click(); }
+        });
+    }, 500);
+
+    // Auto-expandir lotes cuando se carguen
+    $(document).ajaxComplete(function(event, xhr, settings) {
+        if(settings.url.indexOf('inventarioglobal_lotes_articulo.php') !== -1) {
+            setTimeout(function() {
+                document.querySelectorAll('.fila-lote').forEach(function(el){ 
+                    if(!el.classList.contains('shown-folios')) { el.click(); }
+                });
+            }, 300);
+        }
+    });
+
+    <?php $hayArticulos = is_array($articulosAlmacen) && count($articulosAlmacen) > 0; ?>
+    if (!<?= $hayArticulos ? 'true' : 'false' ?>) {
+        var c = document.getElementById('bloque-equipo-capital');
+        var d = document.createElement('div'); d.className='alert alert-warning mt-3';
+        d.innerHTML='<i class="mdi mdi-alert-circle-outline mr-1"></i> No se encontraron artículos para <strong><?= htmlspecialchars(trim($busqueda)) ?></strong>.';
+        if (c) c.parentNode.insertBefore(d, c);
+    }
+<?php endif; ?>
+})();
+</script>
 </body>
 
 </html>

@@ -43,6 +43,12 @@ if ($caducidad !== '' && $caducidad !== 'N/A') {
     $where .= " AND ST.STOCK_CADUCIDAD IS NULL";
 }
 
+$busqueda = isset($_GET['busqueda']) ? trim($_GET['busqueda']) : '';
+if (!empty($busqueda)) {
+    $busqSql = str_replace("'", "''", $busqueda);
+    $where .= " AND (UPPER(ST.STOCK_LOTE) LIKE UPPER('%{$busqSql}%') OR UPPER(ST.STOCK_SERIE) LIKE UPPER('%{$busqSql}%') OR UPPER(ST.STOCK_FOLIO) LIKE UPPER('%{$busqSql}%'))";
+}
+
 $sql = "
     SELECT 
         ST.STOCK_FOLIO,
