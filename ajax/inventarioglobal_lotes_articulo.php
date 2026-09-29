@@ -26,7 +26,7 @@ $busqueda = isset($_GET['busqueda']) ? trim($_GET['busqueda']) : '';
 if (!empty($busqueda)) {
     // Escapar búsqueda
     $busqSql = str_replace("'", "''", $busqueda);
-    $where .= " AND (UPPER(ST.STOCK_LOTE) LIKE UPPER('%{$busqSql}%') OR UPPER(ST.STOCK_SERIE) LIKE UPPER('%{$busqSql}%') OR UPPER(ST.STOCK_FOLIO) LIKE UPPER('%{$busqSql}%'))";
+    $where .= " AND (UPPER(ST.STOCK_LOTE) LIKE UPPER('%{$busqSql}%') OR UPPER(ST.STOCK_SERIE) LIKE UPPER('%{$busqSql}%') OR UPPER(ST.STOCK_FOLIO) LIKE UPPER('%{$busqSql}%') OR UPPER(X.CLAVE_ARTICULO) LIKE UPPER('%{$busqSql}%') OR UPPER(AR.NOMBRE) LIKE UPPER('%{$busqSql}%'))";
 }
 
 $sql = "
@@ -44,6 +44,8 @@ $sql = "
     FROM AMPAR_HIS_STOCK ST
     LEFT JOIN AMPAR_HIS_ALMACEN AL ON AL.ALMACEN_ID = ST.STOCK_ALMACENIDACTUAL
     LEFT JOIN AMPAR_HIS_ALMACEN PA ON PA.ALMACEN_ID = AL.ALMACEN_ALMACEN_MS
+    LEFT JOIN ARTICULOS AR ON AR.ARTICULO_ID = ST.STOCK_ARTICULOID
+    LEFT JOIN (SELECT CLAVE_ARTICULO_ID, CLAVE_ARTICULO, ARTICULO_ID FROM CLAVES_ARTICULOS WHERE ROL_CLAVE_ART_ID = 17) X ON X.ARTICULO_ID = AR.ARTICULO_ID
     WHERE " . $where . "
     GROUP BY 
         ST.STOCK_SERIE,
