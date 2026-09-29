@@ -46,7 +46,7 @@ if ($caducidad !== '' && $caducidad !== 'N/A') {
 $busqueda = isset($_GET['busqueda']) ? trim($_GET['busqueda']) : '';
 if (!empty($busqueda)) {
     $busqSql = str_replace("'", "''", $busqueda);
-    $where .= " AND (UPPER(ST.STOCK_LOTE) LIKE UPPER('%{$busqSql}%') OR UPPER(ST.STOCK_SERIE) LIKE UPPER('%{$busqSql}%') OR UPPER(ST.STOCK_FOLIO) LIKE UPPER('%{$busqSql}%'))";
+    $where .= " AND (UPPER(ST.STOCK_LOTE) LIKE UPPER('%{$busqSql}%') OR UPPER(ST.STOCK_SERIE) LIKE UPPER('%{$busqSql}%') OR UPPER(ST.STOCK_FOLIO) LIKE UPPER('%{$busqSql}%') OR UPPER(X.CLAVE_ARTICULO) LIKE UPPER('%{$busqSql}%') OR UPPER(AR.NOMBRE) LIKE UPPER('%{$busqSql}%'))";
 }
 
 $sql = "
