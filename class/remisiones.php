@@ -599,10 +599,16 @@ class remisiones
 
         // Cancelación -> regresa evento a iniciado (15)
         if ($status == 5) {
-            $sql2 = "UPDATE AMPAR_HIS_EVENTOS
-                     SET EVENTO_STATUSGENERAL = 15
-                     WHERE EVENTO_ID = (SELECT REMISION_EVENTOID FROM AMPAR_HIS_REMISIONES WHERE REMISION_ID = {$id})";
-            $db->execute($sql2);
+            $sqlCheck = "SELECT COUNT(*) AS TOTAL FROM AMPAR_HIS_REMISIONES WHERE REMISION_EVENTOID = (SELECT REMISION_EVENTOID FROM AMPAR_HIS_REMISIONES WHERE REMISION_ID = {$id}) AND REMISION_STATUS NOT IN (4, 5) AND REMISION_ID <> {$id}";
+            $rCheck = $db->query($sqlCheck);
+            $totalActive = (int)($rCheck[0]['TOTAL'] ?? 0);
+
+            if ($totalActive == 0) {
+                $sql2 = "UPDATE AMPAR_HIS_EVENTOS
+                         SET EVENTO_STATUSGENERAL = 15
+                         WHERE EVENTO_ID = (SELECT REMISION_EVENTOID FROM AMPAR_HIS_REMISIONES WHERE REMISION_ID = {$id})";
+                $db->execute($sql2);
+            }
         }
 
         $db->close();

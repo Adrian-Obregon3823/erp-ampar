@@ -81,7 +81,9 @@
                                     </div>
                                     <div class="form-group">
                                         <label for="remevento" id="lbl_remevento">Evento</label>
-                                        <input type="text" class="form-control" id="remevento" name="remevento">
+                                        <select class="form-control select2" id="remevento" name="remevento" style="width:100%;">
+                                            <option value="">Seleccione...</option>
+                                        </select>
                                         <input type="hidden" class="form-control" id="remeventoid" name="remeventoid">
                                         <input type="hidden" class="form-control" id="remproyectoid" name="remproyectoid">
                                         <input type="hidden" class="form-control" id="remisionid" name="remisionid">
@@ -305,6 +307,10 @@
                 itemsal += "<option value='" + item.ID + "'>" + item.NOMBRE + "</option>";
             });
             $("#remalmacen").html(itemsal);
+            if (window.autoSelectAlmacenId) {
+                $("#remalmacen").val(window.autoSelectAlmacenId).trigger("change");
+                window.autoSelectAlmacenId = null;
+            }
         });
 
         // Cargar catálogo de proveedores globalmente para pestaña Otros
@@ -321,7 +327,12 @@
         }
 
         async function tmobtenerEventos(almacenid) {
-            return await $.getJSON("../ajax/get.eventos.remision.php?almacenid=" + almacenid);
+            let url = "../ajax/get.eventos.remision.php?almacenid=" + almacenid;
+            let initialId = window.autoSelectEventoId || $('#initial_eventoid').val();
+            if (initialId) {
+                url += "&eventoid=" + initialId;
+            }
+            return await $.getJSON(url);
         }
 
         async function tmobtenerArticulosEventos(eventoid) {
@@ -383,14 +394,16 @@
             $("#remisionid").val("");
             $("#remeventoclienteid").val("");
             $("#contenedor-extra-eq").hide();
+            $("#contenedor-articulos-maletas").empty();
             $("#selectExtraEq").html("<option value=''>Cargando Equipo Capital...</option>");
             window.equipoCapitalDisponibleLocal = [];
             window.rfidRemisionPendientes = [];
             window.rfidMismatchNotificado = false;
 
-            if ($("#remevento").data("ui-autocomplete")) {
-                $("#remevento").autocomplete("destroy");
+            if ($("#remevento").data("select2")) {
+                $("#remevento").select2("destroy");
             }
+            $("#remevento").html("<option value=''>Seleccione...</option>");
 
             $("#earticulosBody").empty();
             $("#productosBody").empty();
@@ -418,67 +431,65 @@
                         $("#remalmacen").prop("disabled", false);
                         $("#remevento").prop("readonly", false);
 
-                        $("#remevento").autocomplete({
-                            source: function(request, response) {
-                                var term = request.term.toUpperCase();
-                                response($.map(proyectosValidos, function(obj) {
-                                    var folio = obj.FOLIO || '';
-                                    var concepto = obj.NOMBRE ? obj.NOMBRE.toUpperCase() : '';
-                                    var status = obj.STATUS_NOMBRE ? obj.STATUS_NOMBRE.toUpperCase() : '';
-                                    var label = folio + ' - ' + concepto + (status ? ' [' + status + ']' : '');
-
-                                    if (term === '' || label.includes(term) || folio.includes(term) || concepto.includes(term) || status.includes(term)) {
-                                        return {
-                                            label: label,
-                                            id: obj.ID,
-                                            nombre: obj.NOMBRE,
-                                            folio: obj.FOLIO,
-                                            status: status,
-                                            cliente_id: obj.CLIENTE_ID || ''
-                                        };
-                                    }
-                                    return null;
-                                }).filter(Boolean));
-                            },
-                            minLength: 0,
-                            select: function(event, ui) {
-                                $("#remevento").val(ui.item.label);
-                                $("#remproyectoid").val(ui.item.id);
-                                $("#remeventoid").val(""); // clear event
-                                $("#remeventoclienteid").val(ui.item.cliente_id);
-                                $("#remevento").prop("readonly", true);
-                                $("#contenedor-extra-eq").show();
-
-                                const almacenId = $("#remalmacen").val();
-                                const clienteId = ui.item.cliente_id || '';
-
-                                $("#selectExtraEq").html("<option value=''>Cargando Equipo Capital...</option>");
-                                $.getJSON("../ajax/get.equipocapital.disponible.php?almacenid=" + almacenId + "&clienteid=" + clienteId, function(data) {
-                                    window.equipoCapitalDisponibleLocal = data || [];
-                                    let optHtml = "<option value=''>Seleccione Equipo Capital...</option>";
-                                    $.each(data || [], function(i, o) {
-                                        const label = (o.FOLIO ? o.FOLIO + ' - ' : '') + (o.ARTICULO_NOMBRE || '').toUpperCase() + (o.SERIE ? ' (S/N: ' + o.SERIE + ')' : '') + (o.CLAVE_ARTICULO ? ' (' + o.CLAVE_ARTICULO + ')' : '');
-                                        optHtml += `<option value="${o.ID}">${label}</option>`;
-                                    });
-                                    $("#selectExtraEq").html(optHtml);
-                                });
-
-                                $("#remisionid").val("");
-                                window.rfidRemisionPendientes = [];
-                                window.rfidMismatchNotificado = false;
-
-                                tmobtenerArticulosProyectos(ui.item.id).then(function(resultarticulos) {
-                                    console.log('Artículos de proyecto recibidos:', resultarticulos);
-                                    if (!Array.isArray(resultarticulos)) return;
-
-                                    if ($("#remarticulos").data("ui-autocomplete")) {
-                                        $("#remarticulos").autocomplete("destroy");
-                                    }
-
-                                    procesarYMostrarArticulos(resultarticulos);
-                                });
-                            }
+                        let optHtml = "<option value=''>Seleccione Proyecto...</option>";
+                        $.each(proyectosValidos, function(i, obj) {
+                            var folio = obj.FOLIO || '';
+                            var concepto = obj.NOMBRE ? obj.NOMBRE.toUpperCase() : '';
+                            var status = obj.STATUS_NOMBRE ? obj.STATUS_NOMBRE.toUpperCase() : '';
+                            var label = folio + ' - ' + concepto + (status ? ' [' + status + ']' : '');
+                            optHtml += `<option value="${obj.ID}" data-cliente="${obj.CLIENTE_ID || ''}">${label}</option>`;
                         });
+                        
+                        if ($("#remevento").data("select2")) {
+                            $("#remevento").select2("destroy");
+                        }
+                        $("#remevento").html(optHtml).select2({width: '100%'});
+                        
+                        $("#remevento").off("change").on("change", function() {
+                            var selectedId = $(this).val();
+                            if (!selectedId) {
+                                $("#contenedor-extra-eq").hide();
+                                $("#remarticulos").val('');
+                                return;
+                            }
+                            var clienteId = $(this).find(':selected').data('cliente') || '';
+                            
+                            $("#remeventoid").val("");
+                            $("#remproyectoid").val(selectedId);
+                            $("#remeventoclienteid").val(clienteId);
+                            
+                            $("#contenedor-extra-eq").show();
+                            const almacenId = $("#remalmacen").val();
+
+                            $("#selectExtraEq").html("<option value=''>Cargando Equipo Capital...</option>");
+                            $.getJSON("../ajax/get.equipocapital.disponible.php?almacenid=" + almacenId + "&clienteid=" + clienteId, function(data) {
+                                window.equipoCapitalDisponibleLocal = data || [];
+                                let ecHtml = "<option value=''>Seleccione Equipo Capital...</option>";
+                                $.each(data || [], function(i, o) {
+                                    const label = (o.FOLIO ? o.FOLIO + ' - ' : '') + (o.ARTICULO_NOMBRE || '').toUpperCase() + (o.SERIE ? ' (S/N: ' + o.SERIE + ')' : '') + (o.CLAVE_ARTICULO ? ' (' + o.CLAVE_ARTICULO + ')' : '');
+                                    ecHtml += `<option value="${o.ID}">${label}</option>`;
+                                });
+                                $("#selectExtraEq").html(ecHtml);
+                            });
+
+                            $("#remisionid").val("");
+                            window.rfidRemisionPendientes = [];
+                            window.rfidMismatchNotificado = false;
+
+                            tmobtenerArticulosProyectos(selectedId).then(function(resultarticulos) {
+                                if (!Array.isArray(resultarticulos)) return;
+                                if ($("#remarticulos").data("ui-autocomplete")) {
+                                    $("#remarticulos").autocomplete("destroy");
+                                }
+                                procesarYMostrarArticulos(resultarticulos);
+                            });
+                        });
+                        
+                        if (window.autoSelectEventoId) {
+                            $("#remevento").val(window.autoSelectEventoId).trigger("change");
+                            $("#remevento").prop("disabled", true);
+                            window.autoSelectEventoId = null;
+                        }
                     } else {
                         $("#remalmacen").prop("disabled", false);
                         $("#remevento").val("No se encontraron proyectos para este almacén").prop("readonly", true);
@@ -501,102 +512,81 @@
                         $("#remalmacen").prop("disabled", false);
                         $("#remevento").prop("readonly", false);
 
-                        $("#remevento").autocomplete({
-                            source: function(request, response) {
-                                var term = request.term.toUpperCase();
-                                response($.map(eventosValidos, function(obj) {
-                                    var folio = obj.FOLIO || '';
-                                    var concepto = obj.NOMBRE ? obj.NOMBRE.toUpperCase() : '';
-                                    var status = obj.STATUS_NOMBRE ? obj.STATUS_NOMBRE.toUpperCase() : '';
-                                    var label = folio + ' - ' + concepto + (status ? ' [' + status + ']' : '');
-
-                                    if (term === '' || label.includes(term) || folio.includes(term) || concepto.includes(term) || status.includes(term)) {
-                                        return {
-                                            label: label,
-                                            id: obj.ID,
-                                            nombre: obj.NOMBRE,
-                                            folio: obj.FOLIO,
-                                            status: status,
-                                            cliente_id: obj.CLIENTE_ID || ''
-                                        };
-                                    }
-                                    return null;
-                                }).filter(Boolean));
-                            },
-                            minLength: 0,
-                            select: function(event, ui) {
-                                $("#remevento").val(ui.item.label);
-                                $("#remeventoid").val(ui.item.id);
-                                $("#remproyectoid").val(""); // clear project
-                                $("#remeventoclienteid").val(ui.item.cliente_id);
-                                $("#remevento").prop("readonly", true);
-                                $("#contenedor-extra-eq").show();
-
-                                const almacenId = $("#remalmacen").val();
-                                const clienteId = ui.item.cliente_id || '';
-
-                                $("#selectExtraEq").html("<option value=''>Cargando Equipo Capital...</option>");
-                                $.getJSON("../ajax/get.equipocapital.disponible.php?almacenid=" + almacenId + "&clienteid=" + clienteId, function(data) {
-                                    window.equipoCapitalDisponibleLocal = data || [];
-                                    let optHtml = "<option value=''>Seleccione Equipo Capital...</option>";
-                                    $.each(data || [], function(i, o) {
-                                        const label = (o.FOLIO ? o.FOLIO + ' - ' : '') + (o.ARTICULO_NOMBRE || '').toUpperCase() + (o.SERIE ? ' (S/N: ' + o.SERIE + ')' : '') + (o.CLAVE_ARTICULO ? ' (' + o.CLAVE_ARTICULO + ')' : '');
-                                        optHtml += `<option value="${o.ID}">${label}</option>`;
-                                    });
-                                    $("#selectExtraEq").html(optHtml);
-                                });
-
-                                $("#remisionid").val("");
-                                window.rfidRemisionPendientes = [];
-                                window.rfidMismatchNotificado = false;
-
-                                tmobtenerArticulosEventos(ui.item.id).then(function(resultarticulos) {
-                                    console.log('Artículos recibidos:', resultarticulos);
-                                    if (!Array.isArray(resultarticulos)) return;
-
-                                    if ($("#remarticulos").data("ui-autocomplete")) {
-                                        $("#remarticulos").autocomplete("destroy");
-                                    }
-
-                                    procesarYMostrarArticulos(resultarticulos, ui.item.id);
-                                }).catch(function(error) {
-                                    console.error('Error al cargar artículos:', error);
-                                    Swal.fire({
-                                        text: "Error al cargar artículos del evento.",
-                                        icon: "error",
-                                        customClass: {
-                                            confirmButton: 'btn btn-success'
-                                        }
-                                    });
-                                });
-
-                                tmobtenerProveedores(ui.item.id).then(function(resultproveedores) {
-                                    var itemspro = "<option value=''></option>";
-                                    $.each(resultproveedores, function(index, item) {
-                                        itemspro += "<option value='" + item.ID + "'>" + item.NOMBRE + "</option>";
-                                    });
-                                    $("#eproveedor").html(itemspro);
-                                }).catch(function(error) {
-                                    console.error('Error al cargar proveedores:', error);
-                                    Swal.fire({
-                                        text: "Error al cargar proveedores del evento.",
-                                        icon: "error",
-                                        customClass: {
-                                            confirmButton: 'btn btn-success'
-                                        }
-                                    });
-                                });
-
-                                return false;
-                            }
+                        let optHtml = "<option value=''>Seleccione Evento...</option>";
+                        $.each(eventosValidos, function(i, obj) {
+                            var folio = obj.FOLIO || '';
+                            var concepto = obj.NOMBRE ? obj.NOMBRE.toUpperCase() : '';
+                            var status = obj.STATUS_NOMBRE ? obj.STATUS_NOMBRE.toUpperCase() : '';
+                            var label = folio + ' - ' + concepto + (status ? ' [' + status + ']' : '');
+                            var isSelected = (window.autoSelectEventoId && String(obj.ID) === String(window.autoSelectEventoId)) ? "selected" : "";
+                            optHtml += `<option value="${obj.ID}" data-cliente="${obj.CLIENTE_ID || ''}" ${isSelected}>${label}</option>`;
                         });
-
-                        // Mostrar dropdown al hacer click en el campo de evento
-                        $("#remevento").on("focus", function() {
-                            if (!$(this).prop("readonly")) {
-                                $(this).autocomplete("search", "");
+                        
+                        if ($("#remevento").data("select2")) {
+                            $("#remevento").select2("destroy");
+                        }
+                        $("#remevento").html(optHtml).select2({width: '100%'});
+                        
+                        $("#remevento").off("change").on("change", function() {
+                            var selectedId = $(this).val();
+                            if (!selectedId) {
+                                $("#contenedor-extra-eq").hide();
+                                $("#remarticulos").val('');
+                                return;
                             }
+                            var clienteId = $(this).find(':selected').data('cliente') || '';
+                            
+                            $("#remeventoid").val(selectedId);
+                            $("#remproyectoid").val(""); // clear project
+                            $("#remeventoclienteid").val(clienteId);
+                            
+                            $("#contenedor-extra-eq").show();
+                            const almacenId = $("#remalmacen").val();
+
+                            $("#selectExtraEq").html("<option value=''>Cargando Equipo Capital...</option>");
+                            $.getJSON("../ajax/get.equipocapital.disponible.php?almacenid=" + almacenId + "&clienteid=" + clienteId, function(data) {
+                                window.equipoCapitalDisponibleLocal = data || [];
+                                let ecHtml = "<option value=''>Seleccione Equipo Capital...</option>";
+                                $.each(data || [], function(i, o) {
+                                    const label = (o.FOLIO ? o.FOLIO + ' - ' : '') + (o.ARTICULO_NOMBRE || '').toUpperCase() + (o.SERIE ? ' (S/N: ' + o.SERIE + ')' : '') + (o.CLAVE_ARTICULO ? ' (' + o.CLAVE_ARTICULO + ')' : '');
+                                    ecHtml += `<option value="${o.ID}">${label}</option>`;
+                                });
+                                $("#selectExtraEq").html(ecHtml);
+                            });
+
+                            $("#remisionid").val("");
+                            window.rfidRemisionPendientes = [];
+                            window.rfidMismatchNotificado = false;
+
+                            tmobtenerArticulosEventos(selectedId).then(function(resultarticulos) {
+                                if (!Array.isArray(resultarticulos)) return;
+                                if ($("#remarticulos").data("ui-autocomplete")) {
+                                    $("#remarticulos").autocomplete("destroy");
+                                }
+                                procesarYMostrarArticulos(resultarticulos, selectedId);
+                            }).catch(function(error) {
+                                Swal.fire({ text: "Error al cargar artículos del evento.", icon: "error" });
+                            });
+
+                            tmobtenerProveedores(selectedId).then(function(resultproveedores) {
+                                var itemspro = "<option value=''></option>";
+                                $.each(resultproveedores, function(index, item) {
+                                    itemspro += "<option value='" + item.ID + "'>" + item.NOMBRE + "</option>";
+                                });
+                                $("#eproveedor").html(itemspro);
+                            }).catch(function(error) {
+                                Swal.fire({ text: "Error al cargar proveedores del evento.", icon: "error" });
+                            });
                         });
+                        
+                        if (window.autoSelectEventoId) {
+                            // Event is already selected in HTML, just trigger change to load maletas
+                            $("#remevento").trigger("change");
+                            setTimeout(function() {
+                                $("#remevento").prop("disabled", true);
+                            }, 500);
+                            window.autoSelectEventoId = null;
+                        }
                     } else {
                         Swal.fire({
                             text: "No se encontraron eventos para este almacén.",
@@ -859,19 +849,8 @@
             $(".chk-maleta-todos").prop("checked", false);
 
             if (agregados > 0) {
-                let msg = `Se agregaron ${agregados} artículos.`;
-                if (yaExistentes > 0) {
-                    msg += ` (${yaExistentes} ya existían).`;
-                }
-                if (sinPrecio > 0) {
-                    msg += ` (${sinPrecio} fueron ignorados por no tener precio).`;
-                }
-                Swal.fire({
-                    text: msg,
-                    icon: "success",
-                    timer: 3500,
-                    showConfirmButton: false
-                });
+                // Silently added, no popup needed
+
             } else if (yaExistentes > 0 || sinPrecio > 0) {
                 let msg = "";
                 if (yaExistentes > 0 && sinPrecio > 0) {
@@ -1442,19 +1421,47 @@
                         $("#loading").show();
                     },
                     success: function(response) {
-                        if (response.trim() === "") {
-                            if (typeof Swal !== 'undefined') {
-                                Swal.fire({
-                                    html: "Remisión guardada exitosamente.<br><br><b>Siguiente paso:</b> Se debe realizar la entrega física. El encargado deberá subir las evidencias (fotos y archivo de remisión firmado) para que el evento pueda pasar a Revisión.",
-                                    icon: "success",
-                                    customClass: { confirmButton: 'btn btn-success' }
-                                }).then(() => { location.reload(); });
+                        var newRemisionId = response.trim();
+                        var ids = newRemisionId.split(',');
+                        var isValid = true;
+                        var firstId = "";
+                        
+                        ids.forEach(function(id) {
+                            if (isNaN(id) || id === "") {
+                                isValid = false;
+                            } else if (firstId === "") {
+                                firstId = id;
+                            }
+                        });
+
+                        if (isValid && firstId !== "") {
+                            var eventId = document.getElementById('remeventoid').value;
+                            if (eventId) {
+                                if (ids.length > 1) {
+                                    if (typeof Swal !== 'undefined') {
+                                        Swal.fire({
+                                            title: "¡Atención!",
+                                            text: "Se crearon automáticamente " + ids.length + " remisiones separadas (para stock y equipo capital). Serás redirigido para llenar los datos de la primera.",
+                                            icon: "info",
+                                            confirmButtonText: "Entendido",
+                                            allowOutsideClick: false,
+                                            allowEscapeKey: false
+                                        }).then(() => {
+                                            window.location.href = 'eventos.php?status=16&open_datos_extra=' + btoa(firstId) + '&event_id=' + btoa(eventId);
+                                        });
+                                    } else {
+                                        alert("Se crearon automáticamente " + ids.length + " remisiones separadas. Serás redirigido a la primera.");
+                                        window.location.href = 'eventos.php?status=16&open_datos_extra=' + btoa(firstId) + '&event_id=' + btoa(eventId);
+                                    }
+                                } else {
+                                    window.location.href = 'eventos.php?status=16&open_datos_extra=' + btoa(firstId) + '&event_id=' + btoa(eventId);
+                                }
                             } else {
-                                alert("Remisión guardada exitosamente.\n\nSiguiente paso: Se debe realizar la entrega física. El encargado deberá subir las evidencias (fotos y archivo de remisión firmado) para que el evento pueda pasar a Revisión.");
-                                location.reload();
+                                window.location.reload();
                             }
                         } else {
-                            alert(response);
+                            alert("Ocurrió un error al guardar la remisión: " + response);
+                            $("#loading").hide();
                         }
                     },
                     error: function(xhr, status, error) {
@@ -1689,6 +1696,8 @@
                     $(this).show();
                     if (term.length > 0) {
                         $(this).find('.maleta-body').collapse('show');
+                    } else {
+                        $(this).find('.maleta-body').collapse('hide');
                     }
                 } else {
                     $(this).hide();
@@ -1724,4 +1733,46 @@
             // Errores de conexión los omitimos pasivamente
         }
     }, 2500); // Poll cada 2.5 seg
+
+    // Agregar automáticamente al clickear checkbox y limpiar buscador
+    $(document).on("change", ".chk-articulo-evento:not(:disabled), .chk-maleta-todos", function() {
+        if ($(this).is(":checked")) {
+            $("#btnAgregarSeleccionados").click();
+            $("#buscadorMaletas").val("").trigger("keyup");
+        }
+    });
 </script>
+<?php if (isset($_GET['eventoid'])): ?>
+    <?php
+    $eid = (int)base64_decode($_GET['eventoid']);
+    $db = new FirebirdConnection();
+    // Use EVENTO_ALMACENID and retrieve EVENTO_CONCEPTO to build the label
+    $evtQuery = $db->query("
+        SELECT 
+            E.EVENTO_FOLIO, 
+            E.EVENTO_ALMACENID, 
+            E.EVENTO_CLIENTEID, 
+            CAST(E.EVENTO_CONCEPTO AS VARCHAR(1000)) AS EVENTO_CONCEPTO,
+            S.STATUS_NOMBRE
+        FROM AMPAR_HIS_EVENTOS E
+        LEFT JOIN AMPAR_CONF_STATUS S ON S.STATUS_ID = E.EVENTO_STATUSGENERAL
+        WHERE E.EVENTO_ID = {$eid}
+    ");
+    $db->close();
+    if (!empty($evtQuery)) {
+        $evtFolio = $evtQuery[0]['EVENTO_FOLIO'];
+        $evtAlmacen = $evtQuery[0]['EVENTO_ALMACENID'];
+        $evtClienteId = $evtQuery[0]['EVENTO_CLIENTEID'];
+        $evtNombre = $evtQuery[0]['EVENTO_CONCEPTO'];
+        $evtStatus = strtoupper($evtQuery[0]['STATUS_NOMBRE']);
+        // Match the label format expected by autocomplete exactly
+        $evtLabel = $evtFolio . " - " . $evtNombre . " [" . $evtStatus . "]";
+    }
+    ?>
+    <?php if (!empty($evtQuery)): ?>
+    <script>
+        window.autoSelectEventoId = "<?= $eid ?>";
+        window.autoSelectAlmacenId = "<?= $evtAlmacen ?>";
+    </script>
+    <?php endif; ?>
+<?php endif; ?>
