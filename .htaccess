@@ -1,3 +1,7 @@
+<Files ".env">
+    Require all denied
+</Files>
+
 <IfModule mod_php.c>
   php_value max_input_vars 10000
   php_value max_multipart_body_parts 10000

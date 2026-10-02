@@ -172,6 +172,7 @@ $db->close();
             $('[data-dismiss="modal"]').click();
 
             if (typeof Swal !== 'undefined') {
+              <?php if (!isset($_GET['from_new'])): ?>
               Swal.fire({
                 title: "¡Guardado!",
                 text: "Datos extra guardados exitosamente.",
@@ -179,6 +180,7 @@ $db->close();
                 timer: 1500,
                 showConfirmButton: false
               });
+              <?php endif; ?>
             }
             $btn.prop('disabled', false).text('Guardar Datos');
           } else {
