@@ -124,7 +124,7 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="row mb-3" id="contenedor-paquete-uap">
+                                    <div class="row mb-3" id="contenedor-paquete-uap" style="display: none;">
                                         <div class="col-12">
                                             <div class="card shadow-sm border-0" style="border-radius: 8px; background-color: #e9ecef;">
                                                 <div class="card-body p-3">
@@ -519,7 +519,7 @@
                             var status = obj.STATUS_NOMBRE ? obj.STATUS_NOMBRE.toUpperCase() : '';
                             var label = folio + ' - ' + concepto + (status ? ' [' + status + ']' : '');
                             var isSelected = (window.autoSelectEventoId && String(obj.ID) === String(window.autoSelectEventoId)) ? "selected" : "";
-                            optHtml += `<option value="${obj.ID}" data-cliente="${obj.CLIENTE_ID || ''}" ${isSelected}>${label}</option>`;
+                            optHtml += `<option value="${obj.ID}" data-cliente="${obj.CLIENTE_ID || ''}" data-hospital="${obj.HOSPITAL_ID || ''}" ${isSelected}>${label}</option>`;
                         });
                         
                         if ($("#remevento").data("select2")) {
@@ -531,10 +531,20 @@
                             var selectedId = $(this).val();
                             if (!selectedId) {
                                 $("#contenedor-extra-eq").hide();
+                                $("#contenedor-paquete-uap").hide();
                                 $("#remarticulos").val('');
                                 return;
                             }
-                            var clienteId = $(this).find(':selected').data('cliente') || '';
+                            var $selectedOption = $(this).find(':selected');
+                            var clienteId = $selectedOption.data('cliente') || '';
+                            var hospitalId = $selectedOption.data('hospital') || '';
+                            
+                            if (parseInt(hospitalId) === 25) {
+                                $("#contenedor-paquete-uap").show();
+                            } else {
+                                $("#contenedor-paquete-uap").hide();
+                                $("#selectPaqueteUap").val('');
+                            }
                             
                             $("#remeventoid").val(selectedId);
                             $("#remproyectoid").val(""); // clear project
