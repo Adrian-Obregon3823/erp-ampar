@@ -1,4 +1,4 @@
-﻿<?php include_once("../includes/sesion.php"); ?>
+<?php include_once("../includes/sesion.php"); ?>
 <?php include_once("../includes/includes.php"); ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -28,7 +28,7 @@
                   <div class="col-12">
                     <div class="card">
                       <div class="card-header">
-                        <h4>Remisiones &nbsp;&nbsp;<a style="cursor:pointer;" data-toggle="modal" data-target="#modalglobal" data-title="Nueva Remisión" data-url="../includes/remisiones.nueva.php" aria-selected="false"><img src="../img/agregar2.png" style="width:25px; height:25px" title="Nueva Remisión"></a></h4>
+                        <h4>Remisiones</h4>
                       </div>
                       <div class="card-body">
                         <?php

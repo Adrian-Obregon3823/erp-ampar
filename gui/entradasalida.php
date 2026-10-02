@@ -1,4 +1,4 @@
-﻿<?php include_once("../includes/sesion.php"); ?>
+<?php include_once("../includes/sesion.php"); ?>
 <?php include_once("../includes/includes.php"); ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -59,9 +59,7 @@
                        <div class="card-header bg-white py-3 d-flex flex-column flex-sm-row align-items-stretch align-items-sm-center justify-content-between">
                          <h4 class="card-title mb-0 font-weight-bold text-dark">Historial de Entradas</h4>
                          <div class="d-flex align-items-center mt-3 mt-sm-0">
-                           <button class="btn btn-primary btn-sm px-4 py-2 font-weight-bold d-flex align-items-center" data-toggle="modal" data-target="#modalglobal" data-title="Nueva Entrada" data-url="../includes/entradasalida.entradas.php">
-                              <i class="mdi mdi-plus-circle-outline mr-2" style="font-size: 1.1rem;"></i> Nueva Entrada
-                           </button>
+
                            <a class="btn btn-info btn-sm px-4 py-2 font-weight-bold d-flex align-items-center ml-2" href="../includes/entradasalida.reimpresionetiquetas.php" target="_blank">
                               <i class="mdi mdi-printer mr-2" style="font-size: 1.1rem;"></i> Reimprimir Etiqueta
                            </a>
